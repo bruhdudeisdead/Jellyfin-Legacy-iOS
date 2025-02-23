@@ -1,13 +1,13 @@
 //
-//  SecondViewController.h
+//  HomeViewController.h
 //  Jellyfin
 //
-//  Created by Jack on 11/30/24.
+//  Created by bruhdude on 11/30/24.
 //  Copyright (c) 2024 DumbStupidStuff. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>
 
-@interface SecondViewController : UIViewController
+@interface HomeViewController : UIViewController
 
 @end

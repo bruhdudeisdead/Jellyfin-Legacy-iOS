@@ -3,12 +3,12 @@
     {
       "idiom" : "universal",
       "scale" : "1x",
-      "filename" : "first.png"
+      "filename" : "music1x.png"
     },
     {
       "idiom" : "universal",
       "scale" : "2x",
-      "filename" : "first@2x.png"
+      "filename" : "music2x.png"
     }
   ],
   "info" : {

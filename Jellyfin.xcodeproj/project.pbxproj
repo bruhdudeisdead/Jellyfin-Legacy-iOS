@@ -7,6 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		863FE2CC2D6A68D80059FD23 /* MovieViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 863FE2CB2D6A68D80059FD23 /* MovieViewController.m */; };
+		863FE2CF2D6A72900059FD23 /* LoginViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 863FE2CD2D6A72900059FD23 /* LoginViewController.m */; };
+		867AA0BC2D200D2D00BE9C56 /* LibrariesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 867AA0BB2D200D2D00BE9C56 /* LibrariesViewController.m */; };
+		867AA0BF2D20137400BE9C56 /* LibraryContentViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 867AA0BE2D20137400BE9C56 /* LibraryContentViewController.m */; };
+		869763D02CFB92B7005021D3 /* MusicViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 869763CF2CFB92B7005021D3 /* MusicViewController.m */; };
+		869763D32CFB9A68005021D3 /* NowPlayingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 869763D22CFB9A68005021D3 /* NowPlayingViewController.m */; };
+		869763D82CFB9D8C005021D3 /* SVProgressHUD.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 869763D52CFB9D8C005021D3 /* SVProgressHUD.bundle */; };
+		869763D92CFB9D8C005021D3 /* SVProgressHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 869763D72CFB9D8C005021D3 /* SVProgressHUD.m */; };
+		869763E92CFBF82A005021D3 /* MoviesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 869763E82CFBF82A005021D3 /* MoviesViewController.m */; };
+		869763EC2CFC04E2005021D3 /* AlbumViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 869763EB2CFC04E2005021D3 /* AlbumViewController.m */; };
 		86FEE9092CFB4FE9001F7776 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 86FEE9082CFB4FE9001F7776 /* Foundation.framework */; };
 		86FEE90B2CFB4FE9001F7776 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 86FEE90A2CFB4FE9001F7776 /* CoreGraphics.framework */; };
 		86FEE90D2CFB4FE9001F7776 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 86FEE90C2CFB4FE9001F7776 /* UIKit.framework */; };
@@ -14,14 +24,16 @@
 		86FEE9152CFB4FE9001F7776 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 86FEE9142CFB4FE9001F7776 /* main.m */; };
 		86FEE9192CFB4FE9001F7776 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 86FEE9182CFB4FE9001F7776 /* AppDelegate.m */; };
 		86FEE91C2CFB4FE9001F7776 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 86FEE91A2CFB4FE9001F7776 /* Main.storyboard */; };
-		86FEE91F2CFB4FE9001F7776 /* FirstViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 86FEE91E2CFB4FE9001F7776 /* FirstViewController.m */; };
-		86FEE9222CFB4FE9001F7776 /* SecondViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 86FEE9212CFB4FE9001F7776 /* SecondViewController.m */; };
+		86FEE91F2CFB4FE9001F7776 /* TVShowsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 86FEE91E2CFB4FE9001F7776 /* TVShowsViewController.m */; };
+		86FEE9222CFB4FE9001F7776 /* HomeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 86FEE9212CFB4FE9001F7776 /* HomeViewController.m */; };
 		86FEE9242CFB4FE9001F7776 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 86FEE9232CFB4FE9001F7776 /* Images.xcassets */; };
 		86FEE92B2CFB4FE9001F7776 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 86FEE92A2CFB4FE9001F7776 /* XCTest.framework */; };
 		86FEE92C2CFB4FE9001F7776 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 86FEE9082CFB4FE9001F7776 /* Foundation.framework */; };
 		86FEE92D2CFB4FE9001F7776 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 86FEE90C2CFB4FE9001F7776 /* UIKit.framework */; };
 		86FEE9352CFB4FE9001F7776 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 86FEE9332CFB4FE9001F7776 /* InfoPlist.strings */; };
 		86FEE9372CFB4FE9001F7776 /* JellyfinTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 86FEE9362CFB4FE9001F7776 /* JellyfinTests.m */; };
+		86FEE9412CFB58D9001F7776 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 86FEE9402CFB58D9001F7776 /* Settings.bundle */; };
+		86FEE9442CFB6565001F7776 /* EpisodesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 86FEE9432CFB6565001F7776 /* EpisodesViewController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,6 +47,25 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		863FE2CA2D6A68D80059FD23 /* MovieViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MovieViewController.h; sourceTree = "<group>"; };
+		863FE2CB2D6A68D80059FD23 /* MovieViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MovieViewController.m; sourceTree = "<group>"; };
+		863FE2CD2D6A72900059FD23 /* LoginViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LoginViewController.m; sourceTree = "<group>"; };
+		863FE2CE2D6A72900059FD23 /* LoginViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoginViewController.h; sourceTree = "<group>"; };
+		867AA0BA2D200D2D00BE9C56 /* LibrariesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LibrariesViewController.h; sourceTree = "<group>"; };
+		867AA0BB2D200D2D00BE9C56 /* LibrariesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LibrariesViewController.m; sourceTree = "<group>"; };
+		867AA0BD2D20137400BE9C56 /* LibraryContentViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LibraryContentViewController.h; sourceTree = "<group>"; };
+		867AA0BE2D20137400BE9C56 /* LibraryContentViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LibraryContentViewController.m; sourceTree = "<group>"; };
+		869763CE2CFB92B7005021D3 /* MusicViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MusicViewController.h; sourceTree = "<group>"; };
+		869763CF2CFB92B7005021D3 /* MusicViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MusicViewController.m; sourceTree = "<group>"; };
+		869763D12CFB9A68005021D3 /* NowPlayingViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NowPlayingViewController.h; sourceTree = "<group>"; };
+		869763D22CFB9A68005021D3 /* NowPlayingViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NowPlayingViewController.m; sourceTree = "<group>"; };
+		869763D52CFB9D8C005021D3 /* SVProgressHUD.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = SVProgressHUD.bundle; sourceTree = "<group>"; };
+		869763D62CFB9D8C005021D3 /* SVProgressHUD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVProgressHUD.h; sourceTree = "<group>"; };
+		869763D72CFB9D8C005021D3 /* SVProgressHUD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVProgressHUD.m; sourceTree = "<group>"; };
+		869763E72CFBF82A005021D3 /* MoviesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MoviesViewController.h; sourceTree = "<group>"; };
+		869763E82CFBF82A005021D3 /* MoviesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MoviesViewController.m; sourceTree = "<group>"; };
+		869763EA2CFC04E2005021D3 /* AlbumViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlbumViewController.h; sourceTree = "<group>"; };
+		869763EB2CFC04E2005021D3 /* AlbumViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AlbumViewController.m; sourceTree = "<group>"; };
 		86FEE9052CFB4FE9001F7776 /* Jellyfin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Jellyfin.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		86FEE9082CFB4FE9001F7776 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		86FEE90A2CFB4FE9001F7776 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -46,16 +77,19 @@
 		86FEE9172CFB4FE9001F7776 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		86FEE9182CFB4FE9001F7776 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		86FEE91B2CFB4FE9001F7776 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		86FEE91D2CFB4FE9001F7776 /* FirstViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FirstViewController.h; sourceTree = "<group>"; };
-		86FEE91E2CFB4FE9001F7776 /* FirstViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FirstViewController.m; sourceTree = "<group>"; };
-		86FEE9202CFB4FE9001F7776 /* SecondViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SecondViewController.h; sourceTree = "<group>"; };
-		86FEE9212CFB4FE9001F7776 /* SecondViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SecondViewController.m; sourceTree = "<group>"; };
+		86FEE91D2CFB4FE9001F7776 /* TVShowsViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TVShowsViewController.h; sourceTree = "<group>"; };
+		86FEE91E2CFB4FE9001F7776 /* TVShowsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TVShowsViewController.m; sourceTree = "<group>"; };
+		86FEE9202CFB4FE9001F7776 /* HomeViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HomeViewController.h; sourceTree = "<group>"; };
+		86FEE9212CFB4FE9001F7776 /* HomeViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HomeViewController.m; sourceTree = "<group>"; };
 		86FEE9232CFB4FE9001F7776 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		86FEE9292CFB4FE9001F7776 /* JellyfinTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JellyfinTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		86FEE92A2CFB4FE9001F7776 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		86FEE9322CFB4FE9001F7776 /* JellyfinTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "JellyfinTests-Info.plist"; sourceTree = "<group>"; };
 		86FEE9342CFB4FE9001F7776 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		86FEE9362CFB4FE9001F7776 /* JellyfinTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = JellyfinTests.m; sourceTree = "<group>"; };
+		86FEE9402CFB58D9001F7776 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
+		86FEE9422CFB6565001F7776 /* EpisodesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EpisodesViewController.h; sourceTree = "<group>"; };
+		86FEE9432CFB6565001F7776 /* EpisodesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EpisodesViewController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,6 +116,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		869763D42CFB9D8C005021D3 /* SVProgressHUD */ = {
+			isa = PBXGroup;
+			children = (
+				869763D52CFB9D8C005021D3 /* SVProgressHUD.bundle */,
+				869763D62CFB9D8C005021D3 /* SVProgressHUD.h */,
+				869763D72CFB9D8C005021D3 /* SVProgressHUD.m */,
+			);
+			name = SVProgressHUD;
+			path = ../../BideoBlames/BideoBlames/SVProgressHUD;
+			sourceTree = "<group>";
+		};
 		86FEE8FC2CFB4FE9001F7776 = {
 			isa = PBXGroup;
 			children = (
@@ -115,15 +160,35 @@
 		86FEE90E2CFB4FE9001F7776 /* Jellyfin */ = {
 			isa = PBXGroup;
 			children = (
+				86FEE9422CFB6565001F7776 /* EpisodesViewController.h */,
+				86FEE9432CFB6565001F7776 /* EpisodesViewController.m */,
 				86FEE9172CFB4FE9001F7776 /* AppDelegate.h */,
 				86FEE9182CFB4FE9001F7776 /* AppDelegate.m */,
 				86FEE91A2CFB4FE9001F7776 /* Main.storyboard */,
-				86FEE91D2CFB4FE9001F7776 /* FirstViewController.h */,
-				86FEE91E2CFB4FE9001F7776 /* FirstViewController.m */,
-				86FEE9202CFB4FE9001F7776 /* SecondViewController.h */,
-				86FEE9212CFB4FE9001F7776 /* SecondViewController.m */,
+				86FEE91D2CFB4FE9001F7776 /* TVShowsViewController.h */,
+				869763D42CFB9D8C005021D3 /* SVProgressHUD */,
+				86FEE91E2CFB4FE9001F7776 /* TVShowsViewController.m */,
+				869763E72CFBF82A005021D3 /* MoviesViewController.h */,
+				869763E82CFBF82A005021D3 /* MoviesViewController.m */,
+				86FEE9402CFB58D9001F7776 /* Settings.bundle */,
+				86FEE9202CFB4FE9001F7776 /* HomeViewController.h */,
+				86FEE9212CFB4FE9001F7776 /* HomeViewController.m */,
+				863FE2CD2D6A72900059FD23 /* LoginViewController.m */,
+				863FE2CE2D6A72900059FD23 /* LoginViewController.h */,
 				86FEE9232CFB4FE9001F7776 /* Images.xcassets */,
 				86FEE90F2CFB4FE9001F7776 /* Supporting Files */,
+				869763CE2CFB92B7005021D3 /* MusicViewController.h */,
+				869763CF2CFB92B7005021D3 /* MusicViewController.m */,
+				869763D12CFB9A68005021D3 /* NowPlayingViewController.h */,
+				869763D22CFB9A68005021D3 /* NowPlayingViewController.m */,
+				869763EA2CFC04E2005021D3 /* AlbumViewController.h */,
+				869763EB2CFC04E2005021D3 /* AlbumViewController.m */,
+				867AA0BA2D200D2D00BE9C56 /* LibrariesViewController.h */,
+				867AA0BB2D200D2D00BE9C56 /* LibrariesViewController.m */,
+				867AA0BD2D20137400BE9C56 /* LibraryContentViewController.h */,
+				867AA0BE2D20137400BE9C56 /* LibraryContentViewController.m */,
+				863FE2CA2D6A68D80059FD23 /* MovieViewController.h */,
+				863FE2CB2D6A68D80059FD23 /* MovieViewController.m */,
 			);
 			path = Jellyfin;
 			sourceTree = "<group>";
@@ -204,6 +269,13 @@
 				LastUpgradeCheck = 0510;
 				ORGANIZATIONNAME = DumbStupidStuff;
 				TargetAttributes = {
+					86FEE9042CFB4FE9001F7776 = {
+						SystemCapabilities = {
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
+						};
+					};
 					86FEE9282CFB4FE9001F7776 = {
 						TestTargetID = 86FEE9042CFB4FE9001F7776;
 					};
@@ -233,6 +305,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				869763D82CFB9D8C005021D3 /* SVProgressHUD.bundle in Resources */,
+				86FEE9412CFB58D9001F7776 /* Settings.bundle in Resources */,
 				86FEE9242CFB4FE9001F7776 /* Images.xcassets in Resources */,
 				86FEE9132CFB4FE9001F7776 /* InfoPlist.strings in Resources */,
 				86FEE91C2CFB4FE9001F7776 /* Main.storyboard in Resources */,
@@ -254,10 +328,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				86FEE9222CFB4FE9001F7776 /* SecondViewController.m in Sources */,
+				867AA0BF2D20137400BE9C56 /* LibraryContentViewController.m in Sources */,
+				86FEE9222CFB4FE9001F7776 /* HomeViewController.m in Sources */,
+				869763D92CFB9D8C005021D3 /* SVProgressHUD.m in Sources */,
+				869763D32CFB9A68005021D3 /* NowPlayingViewController.m in Sources */,
+				863FE2CF2D6A72900059FD23 /* LoginViewController.m in Sources */,
+				86FEE9442CFB6565001F7776 /* EpisodesViewController.m in Sources */,
+				869763EC2CFC04E2005021D3 /* AlbumViewController.m in Sources */,
+				869763D02CFB92B7005021D3 /* MusicViewController.m in Sources */,
 				86FEE9192CFB4FE9001F7776 /* AppDelegate.m in Sources */,
-				86FEE91F2CFB4FE9001F7776 /* FirstViewController.m in Sources */,
+				869763E92CFBF82A005021D3 /* MoviesViewController.m in Sources */,
+				863FE2CC2D6A68D80059FD23 /* MovieViewController.m in Sources */,
+				86FEE91F2CFB4FE9001F7776 /* TVShowsViewController.m in Sources */,
 				86FEE9152CFB4FE9001F7776 /* main.m in Sources */,
+				867AA0BC2D200D2D00BE9C56 /* LibrariesViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -339,9 +423,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				VALID_ARCHS = "armv7 armv7s";
 			};
 			name = Debug;
 		};
@@ -371,9 +456,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
+				VALID_ARCHS = "armv7 armv7s";
 			};
 			name = Release;
 		};
@@ -385,7 +471,9 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Jellyfin/Jellyfin-Prefix.pch";
 				INFOPLIST_FILE = "Jellyfin/Jellyfin-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -398,7 +486,9 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Jellyfin/Jellyfin-Prefix.pch";
 				INFOPLIST_FILE = "Jellyfin/Jellyfin-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
@@ -420,6 +510,7 @@
 				);
 				INFOPLIST_FILE = "JellyfinTests/JellyfinTests-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				WRAPPER_EXTENSION = xctest;
 			};
@@ -438,6 +529,7 @@
 				GCC_PREFIX_HEADER = "Jellyfin/Jellyfin-Prefix.pch";
 				INFOPLIST_FILE = "JellyfinTests/JellyfinTests-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				WRAPPER_EXTENSION = xctest;
 			};
@@ -462,6 +554,7 @@
 				86FEE93C2CFB4FE9001F7776 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		86FEE93D2CFB4FE9001F7776 /* Build configuration list for PBXNativeTarget "JellyfinTests" */ = {
 			isa = XCConfigurationList;
@@ -470,6 +563,7 @@
 				86FEE93F2CFB4FE9001F7776 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

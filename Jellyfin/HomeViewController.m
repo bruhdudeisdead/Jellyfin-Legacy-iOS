@@ -136,7 +136,7 @@
     self.albumsTableView.tag = 2;
     self.albumsTableView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     [self.scrollView addSubview:self.albumsTableView];
-    self.scrollView.contentSize = CGSizeMake(self.view.bounds.size.width, 720);
+    self.scrollView.contentSize = CGSizeMake(self.view.bounds.size.width, 660);
     [self fetchShows];
     [self fetchAlbums];
 
@@ -300,15 +300,23 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     if(tableView.tag == 1) {
         //borken ;(((((((((((
+        NSDictionary *selectedShow = self.shows[indexPath.row];
+        NSString *showId = selectedShow[@"Id"];
+        NSString *showTitle = selectedShow[@"Name"];
+        
+        EpisodesViewController *episodesVC = [[EpisodesViewController alloc] init];
+        episodesVC.showId = showId;
+        episodesVC.viewTitle = showTitle;
+        [self.navigationController pushViewController:episodesVC animated:YES];
     } else if(tableView.tag == 2) {
         NSDictionary *selectedAlbum = self.albums[indexPath.row];
         NSString *albumId = selectedAlbum[@"Id"];
         NSString *albumTitle = selectedAlbum[@"Name"];
         
-        AlbumViewController *fifthVC = [[AlbumViewController alloc] init];
-        fifthVC.albumId = albumId;
-        fifthVC.albumTitle = albumTitle;
-        [self.navigationController pushViewController:fifthVC animated:YES];
+        AlbumViewController *albumVC = [[AlbumViewController alloc] init];
+        albumVC.albumId = albumId;
+        albumVC.albumTitle = albumTitle;
+        [self.navigationController pushViewController:albumVC animated:YES];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }

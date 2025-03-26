@@ -47,32 +47,37 @@
     blurToolbar.barStyle = UIBarStyleBlack;
     blurToolbar.translucent = YES;
     [backgroundImageView addSubview:blurToolbar];
-
+    
+    self.scrollView = [[UIScrollView alloc] initWithFrame:self.view.bounds];
+    NSLog(@"%lu", (unsigned long)UIViewAutoresizingFlexibleHeight);
+    self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    [self.view addSubview:self.scrollView];
+    
     self.albumArtImageView = [[UIImageView alloc] initWithImage:self.albumArt];
     self.albumArtImageView.contentMode = UIViewContentModeScaleAspectFit;
     self.albumArtImageView.frame = CGRectMake(20, 20, self.view.frame.size.width - 40, self.view.frame.size.width - 40);
-    [self.view addSubview:self.albumArtImageView];
+    [self.scrollView addSubview:self.albumArtImageView];
     
     self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, CGRectGetMaxY(self.albumArtImageView.frame) + 10, self.view.frame.size.width - 40, 30)];
     self.titleLabel.text = self.songTitle ?: @"Unknown Song";
     self.titleLabel.textAlignment = NSTextAlignmentCenter;
     self.titleLabel.textColor = [UIColor whiteColor];
     self.titleLabel.font = [UIFont boldSystemFontOfSize:20];
-    [self.view addSubview:self.titleLabel];
+    [self.scrollView addSubview:self.titleLabel];
     
     self.albumLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, CGRectGetMaxY(self.titleLabel.frame) + 5, self.view.frame.size.width - 40, 20)];
     self.albumLabel.text = self.albumName ?: @"Unknown Album";
     self.albumLabel.textAlignment = NSTextAlignmentCenter;
     self.albumLabel.font = [UIFont systemFontOfSize:18];
     self.albumLabel.textColor = [UIColor whiteColor];
-    [self.view addSubview:self.albumLabel];
+    [self.scrollView addSubview:self.albumLabel];
     
     self.artistLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, CGRectGetMaxY(self.albumLabel.frame) + 5, self.view.frame.size.width - 40, 20)];
     self.artistLabel.text = self.artistName ?: @"Unknown Artist";
     self.artistLabel.textAlignment = NSTextAlignmentCenter;
     self.artistLabel.font = [UIFont systemFontOfSize:16];
     self.artistLabel.textColor = [UIColor whiteColor];
-    [self.view addSubview:self.artistLabel];
+    [self.scrollView addSubview:self.artistLabel];
     //ios <7 is EVIL!
     self.titleLabel.backgroundColor = [UIColor clearColor];
     self.albumLabel.backgroundColor = [UIColor clearColor];
@@ -114,6 +119,9 @@
                                                                 MPMediaItemPropertyAlbumTitle: self.albumName
                                                                 }];
     self.currentTimeInMicroseconds = 0;
+    
+    self.scrollView.contentSize = CGSizeMake(self.view.bounds.size.width, 450);
+    
     [self togglePlayPause];
 }
 

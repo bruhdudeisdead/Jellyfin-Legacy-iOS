@@ -139,7 +139,7 @@
     self.scrollView.contentSize = CGSizeMake(self.view.bounds.size.width, 660);
     [self fetchShows];
     [self fetchAlbums];
-
+    
 }
 
 #pragma mark - Data Fetching
@@ -272,25 +272,25 @@
     } else {
         BOOL loadImages = [[NSUserDefaults standardUserDefaults] boolForKey:@"image_load_artwork"];
         if (loadImages == YES) {
-        NSString *imageUrlString = [NSString stringWithFormat:@"%@/Items/%@/Images/Primary", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"], itemId];
-        NSURL *imageUrl = [NSURL URLWithString:imageUrlString];
-        
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-            NSData *imageData = [NSData dataWithContentsOfURL:imageUrl];
-            if (imageData) {
-                UIImage *image = [UIImage imageWithData:imageData];
-                if (image) {
-                    self.imageCache[itemId] = image;
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        UITableViewCell *updateCell = [tableView cellForRowAtIndexPath:indexPath];
-                        if (updateCell) {
-                            updateCell.imageView.image = image;
-                            [updateCell setNeedsLayout];
-                        }
-                    });
+            NSString *imageUrlString = [NSString stringWithFormat:@"%@/Items/%@/Images/Primary", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"], itemId];
+            NSURL *imageUrl = [NSURL URLWithString:imageUrlString];
+            
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+                NSData *imageData = [NSData dataWithContentsOfURL:imageUrl];
+                if (imageData) {
+                    UIImage *image = [UIImage imageWithData:imageData];
+                    if (image) {
+                        self.imageCache[itemId] = image;
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            UITableViewCell *updateCell = [tableView cellForRowAtIndexPath:indexPath];
+                            if (updateCell) {
+                                updateCell.imageView.image = image;
+                                [updateCell setNeedsLayout];
+                            }
+                        });
+                    }
                 }
-            }
-        });
+            });
         }
     }
     

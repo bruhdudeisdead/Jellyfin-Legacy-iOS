@@ -10,14 +10,17 @@
 #import <MediaPlayer/MediaPlayer.h>
 #import "SVProgressHUD/SVProgressHUD.h"
 #include <sys/sysctl.h>
+#import "Artwork.h"
+#import "AppDelegate.h"
 
 @interface EpisodesViewController () <UITableViewDelegate, UITableViewDataSource>
 
-@property (nonatomic, strong) NSMutableDictionary *imageCache;
 @property (nonatomic, strong) NSArray *episodes;
 @property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, strong) UIRefreshControl *refreshControl;
 @property (nonatomic, strong) NSMutableData *receivedData;
+@property (nonatomic, strong) NSCache *imageCache;
+@property (nonatomic, strong) NSManagedObjectContext *managedObjectContext;
 
 @end
 
@@ -90,6 +93,9 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.imageCache = [[NSCache alloc] init];
+    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+    self.managedObjectContext = appDelegate.managedObjectContext;
     [SVProgressHUD showWithStatus:@"Loading episodes..."];
     self.title = self.viewTitle;
     
@@ -179,6 +185,7 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    __weak typeof(tableView) weakTableView = tableView;
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"EpisodeCell"];
     if (!cell) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"EpisodeCell"];
@@ -191,33 +198,35 @@
     NSString *epid = [NSString stringWithFormat:@"Episode %@", episode[@"IndexNumber"]];
     cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ • %@", season, epid];
     NSString *episodeId = episode[@"Id"];
-    UIImage *cachedImage = self.imageCache[episodeId];
-    
-    if (cachedImage) {
-        cell.imageView.image = cachedImage;
+    ArtworkCache *cachedArtwork = [Artwork fetchArtworkForId:episodeId inContext:self.managedObjectContext];
+    if (cachedArtwork) {
+        UIImage *image = [UIImage imageWithData:cachedArtwork.imageData];
+        if (image) {
+            [self.imageCache setObject:image forKey:episodeId];
+            cell.imageView.image = image;
+        }
     } else {
-        BOOL loadImagesThumb = [[NSUserDefaults standardUserDefaults] boolForKey:@"image_load_thumbnails"];
-        if (loadImagesThumb == YES) {
-        NSString *posterUrlString = [NSString stringWithFormat:@"%@/Items/%@/Images/Primary", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"], episodeId];
-        NSURL *posterUrl = [NSURL URLWithString:posterUrlString];
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-            NSData *imageData = [NSData dataWithContentsOfURL:posterUrl];
+            NSString *imageUrlString = [NSString stringWithFormat:@"%@/Items/%@/Images/Primary?quality=50&height=360&width=640", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"], episodeId];
+            NSURL *imageUrl = [NSURL URLWithString:imageUrlString];
+            NSData *imageData = [NSData dataWithContentsOfURL:imageUrl];
             if (imageData) {
-                UIImage *posterImage = [UIImage imageWithData:imageData];
-                if (posterImage) {
-                    self.imageCache[episodeId] = posterImage;
+                UIImage *image = [UIImage imageWithData:imageData];
+                if (image) {
+                    [self.imageCache setObject:image forKey:episodeId];
+                    
+                    [Artwork saveArtworkInBackground:imageData forId:episodeId mainContext:self.managedObjectContext completion:nil];
                     
                     dispatch_async(dispatch_get_main_queue(), ^{
-                        UITableViewCell *updateCell = [tableView cellForRowAtIndexPath:indexPath];
+                        UITableViewCell *updateCell = [weakTableView cellForRowAtIndexPath:indexPath];
                         if (updateCell) {
-                            updateCell.imageView.image = posterImage;
+                            updateCell.imageView.image = image;
                             [updateCell setNeedsLayout];
                         }
                     });
                 }
             }
         });
-        }
     }
     return cell;
 }

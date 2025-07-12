@@ -9,6 +9,8 @@
 #import "HomeViewController.h"
 #import "AlbumViewController.h"
 #import "EpisodesViewController.h"
+#import "Artwork.h"
+#import "AppDelegate.h"
 #include <sys/sysctl.h>
 
 @interface HomeViewController () <UITableViewDelegate, UITableViewDataSource>
@@ -18,7 +20,8 @@
 @property (nonatomic, strong) UITableView *albumsTableView;
 @property (nonatomic, strong) NSArray *shows;
 @property (nonatomic, strong) NSArray *albums;
-@property (nonatomic, strong) NSMutableDictionary *imageCache;
+@property (nonatomic, strong) NSCache *imageCache;
+@property (nonatomic, strong) NSManagedObjectContext *managedObjectContext;
 
 @end
 
@@ -106,7 +109,9 @@
         return;
     }
     [self fetchServerData];
-    self.imageCache = [NSMutableDictionary dictionary];
+    self.imageCache = [[NSCache alloc] init];
+    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+    self.managedObjectContext = appDelegate.managedObjectContext;
     
     self.scrollView = [[UIScrollView alloc] initWithFrame:self.view.bounds];
     NSLog(@"%lu", (unsigned long)UIViewAutoresizingFlexibleHeight);
@@ -252,6 +257,7 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    __weak typeof(tableView) weakTableView = tableView;
     static NSString *cellIdentifier = @"Cell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
     
@@ -262,36 +268,38 @@
     NSDictionary *item = (tableView.tag == 1) ? self.shows[indexPath.row] : self.albums[indexPath.row];
     cell.textLabel.text = item[@"Name"];
     cell.detailTextLabel.text = (tableView.tag == 1) ? [NSString stringWithFormat:@"Rated %@ • %@", item[@"OfficialRating"], item[@"ProductionYear"]] : item[@"AlbumArtist"];
-    cell.imageView.image = [UIImage imageNamed:@"placeholder"];
+    cell.imageView.image = (tableView.tag == 1) ? [UIImage imageNamed:@"PlaceholderPoster"] : [UIImage imageNamed:@"PlaceholderCover"];
     
     NSString *itemId = item[@"Id"];
-    UIImage *cachedImage = self.imageCache[itemId];
-    
-    if (cachedImage) {
-        cell.imageView.image = cachedImage;
-    } else {
-        BOOL loadImages = [[NSUserDefaults standardUserDefaults] boolForKey:@"image_load_artwork"];
-        if (loadImages == YES) {
-            NSString *imageUrlString = [NSString stringWithFormat:@"%@/Items/%@/Images/Primary", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"], itemId];
-            NSURL *imageUrl = [NSURL URLWithString:imageUrlString];
-            
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-                NSData *imageData = [NSData dataWithContentsOfURL:imageUrl];
-                if (imageData) {
-                    UIImage *image = [UIImage imageWithData:imageData];
-                    if (image) {
-                        self.imageCache[itemId] = image;
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            UITableViewCell *updateCell = [tableView cellForRowAtIndexPath:indexPath];
-                            if (updateCell) {
-                                updateCell.imageView.image = image;
-                                [updateCell setNeedsLayout];
-                            }
-                        });
-                    }
-                }
-            });
+    ArtworkCache *cachedArtwork = [Artwork fetchArtworkForId:itemId inContext:self.managedObjectContext];
+    if (cachedArtwork) {
+        UIImage *image = [UIImage imageWithData:cachedArtwork.imageData];
+        if (image) {
+            [self.imageCache setObject:image forKey:itemId];
+            cell.imageView.image = image;
         }
+    } else {
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+            NSString *imageUrlString = [NSString stringWithFormat:@"%@/Items/%@/Images/Primary?quality=50", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"], itemId];
+            NSURL *imageUrl = [NSURL URLWithString:imageUrlString];
+            NSData *imageData = [NSData dataWithContentsOfURL:imageUrl];
+            if (imageData) {
+                UIImage *image = [UIImage imageWithData:imageData];
+                if (image) {
+                    [self.imageCache setObject:image forKey:itemId];
+                    
+                    [Artwork saveArtworkInBackground:imageData forId:itemId mainContext:self.managedObjectContext completion:nil];
+                    
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        UITableViewCell *updateCell = [weakTableView cellForRowAtIndexPath:indexPath];
+                        if (updateCell) {
+                            updateCell.imageView.image = image;
+                            [updateCell setNeedsLayout];
+                        }
+                    });
+                }
+            }
+        });
     }
     
     return cell;

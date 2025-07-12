@@ -5,8 +5,6 @@
 	<key>PreferenceSpecifiers</key>
 	<array>
 		<dict>
-			<key>Values</key>
-			<array/>
 			<key>Type</key>
 			<string>PSMultiValueSpecifier</string>
 			<key>Title</key>
@@ -81,6 +79,34 @@
 			<string>image_load_thumbnails</string>
 			<key>DefaultValue</key>
 			<true/>
+		</dict>
+		<dict>
+			<key>FooterText</key>
+			<string>These settings affect video &amp; audio playback, like quality.</string>
+			<key>Type</key>
+			<string>PSGroupSpecifier</string>
+			<key>Title</key>
+			<string>Playback Settings</string>
+		</dict>
+		<dict>
+			<key>Values</key>
+			<array>
+				<string>144</string>
+				<string>240</string>
+				<string>360</string>
+				<string>480</string>
+				<string>720</string>
+				<string>1080</string>
+				<string>4k</string>
+			</array>
+			<key>Type</key>
+			<string>PSMultiValueSpecifier</string>
+			<key>Title</key>
+			<string>Video Quality</string>
+			<key>Key</key>
+			<string>vid_quality</string>
+			<key>DefaultValue</key>
+			<string>720</string>
 		</dict>
 	</array>
 	<key>StringsTable</key>

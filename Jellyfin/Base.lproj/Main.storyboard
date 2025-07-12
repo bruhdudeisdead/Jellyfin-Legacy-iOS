@@ -28,6 +28,7 @@
         <!--Navigation Controller - TV Shows-->
         <scene sceneID="SNM-Pu-Bis">
             <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="xKm-nh-h6Q" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <navigationController definesPresentationContext="YES" id="w1Z-LS-2Pi" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="TV Shows" image="tv" id="FcS-XW-3Pa"/>
                     <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" barStyle="black" translucent="NO" prompted="NO"/>
@@ -39,13 +40,13 @@
                         <segue destination="CZ4-MO-1fc" kind="relationship" relationship="rootViewController" id="GPO-FJ-UTq"/>
                     </connections>
                 </navigationController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="xKm-nh-h6Q" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="159" y="-188"/>
         </scene>
         <!--Navigation Controller - Home-->
         <scene sceneID="6vR-ow-HcQ">
             <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="PUF-gr-De2" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <navigationController definesPresentationContext="YES" id="0OI-TZ-p0a" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="Home" image="home" id="8VQ-L2-mf0"/>
                     <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" barStyle="black" translucent="NO" prompted="NO"/>
@@ -57,7 +58,6 @@
                         <segue destination="QUy-BD-bpt" kind="relationship" relationship="rootViewController" id="qjR-2o-d07"/>
                     </connections>
                 </navigationController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="PUF-gr-De2" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="159" y="548"/>
         </scene>
@@ -84,6 +84,7 @@
         <!--Navigation Controller - Music-->
         <scene sceneID="Lyg-nB-iab">
             <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="oLx-vP-ea7" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <navigationController definesPresentationContext="YES" id="3UB-Rk-S3N" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="Music" image="music" id="TTA-z7-B4h"/>
                     <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" barStyle="black" translucent="NO" prompted="NO"/>
@@ -95,7 +96,6 @@
                         <segue destination="eel-sx-mJj" kind="relationship" relationship="rootViewController" id="Rma-3R-D5f"/>
                     </connections>
                 </navigationController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="oLx-vP-ea7" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="159" y="1301"/>
         </scene>
@@ -144,6 +144,7 @@
         <!--Navigation Controller - Movies-->
         <scene sceneID="ojn-sh-AHG">
             <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="MEx-HA-C2A" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <navigationController definesPresentationContext="YES" id="Ns7-LA-Rdw" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="Movies" image="movies" id="IV1-Rp-44F"/>
                     <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" barStyle="black" translucent="NO" prompted="NO"/>
@@ -155,7 +156,6 @@
                         <segue destination="SeT-Uo-wdz" kind="relationship" relationship="rootViewController" id="g2s-uf-apc"/>
                     </connections>
                 </navigationController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="MEx-HA-C2A" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="159" y="2040"/>
         </scene>
@@ -182,6 +182,7 @@
         <!--Navigation Controller - Other Libraries-->
         <scene sceneID="6Ng-Bb-ger">
             <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="7jN-92-zyc" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <navigationController definesPresentationContext="YES" id="Sa0-cV-Vna" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="Other Libraries" image="browse" id="WT7-n4-YjB"/>
                     <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" barStyle="black" translucent="NO" prompted="NO"/>
@@ -193,7 +194,6 @@
                         <segue destination="gUx-Gz-bVA" kind="relationship" relationship="rootViewController" id="Ucy-Za-Gzn"/>
                     </connections>
                 </navigationController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="7jN-92-zyc" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="157" y="2755"/>
         </scene>

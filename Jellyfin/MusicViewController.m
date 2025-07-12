@@ -8,17 +8,20 @@
 
 #import "MusicViewController.h"
 #import "AlbumViewController.h"
+#import "AppDelegate.h"
 #import "NowPlayingViewController.h"
 #import <MediaPlayer/MediaPlayer.h>
 #import <AVFoundation/AVFoundation.h>
 #import "SVProgressHUD/SVProgressHUD.h"
+#import "Artwork.h"
 #include <sys/sysctl.h>
 
 @interface MusicViewController ()
 
 @property (nonatomic, strong) AVPlayer *audioPlayer;
-@property (nonatomic, strong) NSMutableDictionary *imageCache;
+@property (nonatomic, strong) NSCache *imageCache;
 @property (nonatomic, strong) UIRefreshControl *refreshControl;
+@property (nonatomic, strong) NSManagedObjectContext *managedObjectContext;
 
 @end
 
@@ -92,6 +95,9 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    self.imageCache = [[NSCache alloc] init];
+    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+    self.managedObjectContext = appDelegate.managedObjectContext;
     self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
@@ -167,6 +173,8 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    __weak typeof(tableView) weakTableView = tableView;
+
     static NSString *cellIdentifier = @"AlbumCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
     
@@ -177,27 +185,30 @@
     NSDictionary *song = self.music[indexPath.row];
     cell.textLabel.text = song[@"Name"];
     cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ • %@", song[@"AlbumArtist"], song[@"ProductionYear"]];
-    cell.imageView.image = [UIImage imageNamed:@"placeholder"];
+    cell.imageView.image = [UIImage imageNamed:@"PlaceholderCover"];
     NSString *songId = song[@"Id"];
     
-    UIImage *cachedImage = self.imageCache[songId];
-    
-    if (cachedImage) {
-        cell.imageView.image = cachedImage;
+    ArtworkCache *cachedArtwork = [Artwork fetchArtworkForId:songId inContext:self.managedObjectContext];
+    if (cachedArtwork) {
+        UIImage *image = [UIImage imageWithData:cachedArtwork.imageData];
+        if (image) {
+            [self.imageCache setObject:image forKey:songId];
+            cell.imageView.image = image;
+        }
     } else {
-        BOOL loadImages = [[NSUserDefaults standardUserDefaults] boolForKey:@"image_load_artwork"];
-        if (loadImages == YES) {
-        NSString *imageUrlString = [NSString stringWithFormat:@"%@/Items/%@/Images/Primary", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"], songId];
-        NSURL *imageUrl = [NSURL URLWithString:imageUrlString];
-        
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+            NSString *imageUrlString = [NSString stringWithFormat:@"%@/Items/%@/Images/Primary", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"], songId];
+            NSURL *imageUrl = [NSURL URLWithString:imageUrlString];
             NSData *imageData = [NSData dataWithContentsOfURL:imageUrl];
             if (imageData) {
                 UIImage *image = [UIImage imageWithData:imageData];
                 if (image) {
-                    self.imageCache[songId] = image;
+                    [self.imageCache setObject:image forKey:songId];
+                    
+                    [Artwork saveArtworkInBackground:imageData forId:songId mainContext:self.managedObjectContext completion:nil];
+                    
                     dispatch_async(dispatch_get_main_queue(), ^{
-                        UITableViewCell *updateCell = [tableView cellForRowAtIndexPath:indexPath];
+                        UITableViewCell *updateCell = [weakTableView cellForRowAtIndexPath:indexPath];
                         if (updateCell) {
                             updateCell.imageView.image = image;
                             [updateCell setNeedsLayout];
@@ -206,7 +217,6 @@
                 }
             }
         });
-        }
     }
     return cell;
 }

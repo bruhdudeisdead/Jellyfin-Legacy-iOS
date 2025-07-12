@@ -12,13 +12,16 @@
 #include <sys/sysctl.h>
 #import <MediaPlayer/MediaPlayer.h>
 #import <AVFoundation/AVFoundation.h>
+#import "Artwork.h"
+#import "AppDelegate.h"
 
 @interface MoviesViewController ()
 
 @property (nonatomic, strong) UIRefreshControl *refreshControl;
 @property (nonatomic, strong) AVPlayer *audioPlayer;
-@property (nonatomic, strong) NSMutableDictionary *imageCache;
 @property (nonatomic, strong) NSDictionary *selectedMovie2;
+@property (nonatomic, strong) NSCache *imageCache;
+@property (nonatomic, strong) NSManagedObjectContext *managedObjectContext;
 
 @end
 
@@ -92,6 +95,9 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    self.imageCache = [[NSCache alloc] init];
+    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+    self.managedObjectContext = appDelegate.managedObjectContext;
     self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
     self.tableView.delegate = self;
     self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -104,16 +110,16 @@
     [self.refreshControl addTarget:self action:@selector(refreshMovies) forControlEvents:UIControlEventValueChanged];
     [self.tableView addSubview:self.refreshControl];
     
-    [self fetchShows];
+    [self fetchMovies];
 }
 
 - (void)refreshMovies {
     [SVProgressHUD showWithStatus:@"Refreshing movies..."];
     
-    [self fetchShows];
+    [self fetchMovies];
 }
 
-- (void)fetchShows {
+- (void)fetchMovies {
     NSString *serverUrl = [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"];
     NSString *token = [[NSUserDefaults standardUserDefaults] stringForKey:@"token"];
     if(!serverUrl || !token) {
@@ -167,6 +173,7 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    __weak typeof(tableView) weakTableView = tableView;
     static NSString *cellIdentifier = @"MovieCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
     
@@ -177,26 +184,31 @@
     NSDictionary *movie = self.movies[indexPath.row];
     cell.textLabel.text = movie[@"Name"];
     cell.detailTextLabel.text = [NSString stringWithFormat:@"Rated %@ • %@", movie[@"OfficialRating"], movie[@"ProductionYear"]];
-    cell.imageView.image = [UIImage imageNamed:@"placeholder"];
+    cell.imageView.image = [UIImage imageNamed:@"PlaceholderPoster"];
     BOOL loadImagesPoster = [[NSUserDefaults standardUserDefaults] boolForKey:@"image_load_posters"];
     if (loadImagesPoster == YES) {
-    NSString *movieId = movie[@"Id"];
-        UIImage *cachedImage = self.imageCache[movieId];
-        
-        if (cachedImage) {
-            cell.imageView.image = cachedImage;
+        NSString *movieId = movie[@"Id"];
+        ArtworkCache *cachedArtwork = [Artwork fetchArtworkForId:movieId inContext:self.managedObjectContext];
+        if (cachedArtwork) {
+            UIImage *image = [UIImage imageWithData:cachedArtwork.imageData];
+            if (image) {
+                [self.imageCache setObject:image forKey:movieId];
+                cell.imageView.image = image;
+            }
         } else {
-            NSString *imageUrlString = [NSString stringWithFormat:@"%@/Items/%@/Images/Primary", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"], movieId];
-            NSURL *imageUrl = [NSURL URLWithString:imageUrlString];
-            
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+                NSString *imageUrlString = [NSString stringWithFormat:@"%@/Items/%@/Images/Primary?quality=80&height=660&width=440", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"], movieId];
+                NSURL *imageUrl = [NSURL URLWithString:imageUrlString];
                 NSData *imageData = [NSData dataWithContentsOfURL:imageUrl];
                 if (imageData) {
                     UIImage *image = [UIImage imageWithData:imageData];
                     if (image) {
-                        self.imageCache[movieId] = image;
+                        [self.imageCache setObject:image forKey:movieId];
+                        
+                        [Artwork saveArtworkInBackground:imageData forId:movieId mainContext:self.managedObjectContext completion:nil];
+                        
                         dispatch_async(dispatch_get_main_queue(), ^{
-                            UITableViewCell *updateCell = [tableView cellForRowAtIndexPath:indexPath];
+                            UITableViewCell *updateCell = [weakTableView cellForRowAtIndexPath:indexPath];
                             if (updateCell) {
                                 updateCell.imageView.image = image;
                                 [updateCell setNeedsLayout];
@@ -206,16 +218,13 @@
                 }
             });
         }
+
     }
     return cell;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     NSDictionary *selectedMovie = self.movies[indexPath.row];
-    NSLog(@"MOVIE SDETIFUFF");
-    NSLog(@"%@", selectedMovie);
-    NSLog(@"tagline: %@", selectedMovie[@"Taglines"][0]);
-    NSLog(@"overview: %@", selectedMovie[@"Overview"]);
     NSString *movieId = selectedMovie[@"Id"];
     NSString *serverUrl = [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"];
     NSString *token = [[NSUserDefaults standardUserDefaults] stringForKey:@"token"];

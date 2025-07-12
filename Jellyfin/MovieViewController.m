@@ -87,10 +87,8 @@
     CGSize overviewSize = [self.movieOverviewLabel sizeThatFits:CGSizeMake(self.view.frame.size.width - 40, CGFLOAT_MAX)];
     self.movieOverviewLabel.frame = CGRectMake(20, CGRectGetMaxY(self.movieTaglineLabel.frame) + 5, self.view.frame.size.width - 40, overviewSize.height);
     
-    // Set the button frame
     self.moviePlayButton.frame = CGRectMake(20, CGRectGetMaxY(self.movieOverviewLabel.frame) + 10, self.view.frame.size.width - 40, 44);
     
-    // Add action for button tap
     [self.moviePlayButton addTarget:self action:@selector(playMovie) forControlEvents:UIControlEventTouchUpInside];
 
     [self.scrollView addSubview:self.movieOverviewLabel];

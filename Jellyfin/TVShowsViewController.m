@@ -12,12 +12,15 @@
 #import <MediaPlayer/MediaPlayer.h>
 #import <AVFoundation/AVFoundation.h>
 #include <sys/sysctl.h>
+#import "Artwork.h"
+#import "AppDelegate.h"
 
 @interface TVShowsViewController ()
 
-@property (nonatomic, strong) NSMutableDictionary *imageCache;
 @property (nonatomic, strong) AVPlayer *audioPlayer;
 @property (nonatomic, strong) UIRefreshControl *refreshControl;
+@property (nonatomic, strong) NSCache *imageCache;
+@property (nonatomic, strong) NSManagedObjectContext *managedObjectContext;
 
 @end
 
@@ -108,7 +111,9 @@
     
     [SVProgressHUD showWithStatus:@"Loading shows..."];
     
-    self.imageCache = [NSMutableDictionary dictionary];
+    self.imageCache = [[NSCache alloc] init];
+    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+    self.managedObjectContext = appDelegate.managedObjectContext;
     
     [self fetchShows];
 }
@@ -176,6 +181,7 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    __weak typeof(tableView) weakTableView = tableView;
     static NSString *cellIdentifier = @"ShowCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
     
@@ -186,36 +192,38 @@
     NSDictionary *show = self.shows[indexPath.row];
     cell.textLabel.text = show[@"Name"];
     cell.detailTextLabel.text = [NSString stringWithFormat:@"Rated %@ • %@", show[@"OfficialRating"], show[@"ProductionYear"]];
-    cell.imageView.image = [UIImage imageNamed:@"placeholder"];
+    cell.imageView.image = [UIImage imageNamed:@"PlaceholderPoster"];
     
     NSString *showId = show[@"Id"];
-    UIImage *cachedImage = self.imageCache[showId];
-    
-    if (cachedImage) {
-        cell.imageView.image = cachedImage;
+    ArtworkCache *cachedArtwork = [Artwork fetchArtworkForId:showId inContext:self.managedObjectContext];
+    if (cachedArtwork) {
+        UIImage *image = [UIImage imageWithData:cachedArtwork.imageData];
+        if (image) {
+            [self.imageCache setObject:image forKey:showId];
+            cell.imageView.image = image;
+        }
     } else {
-        BOOL loadImagesPoster = [[NSUserDefaults standardUserDefaults] boolForKey:@"image_load_posters"];
-        if (loadImagesPoster == YES) {
-        NSString *posterUrlString = [NSString stringWithFormat:@"%@/Items/%@/Images/Primary", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"], showId];
-        NSURL *posterUrl = [NSURL URLWithString:posterUrlString];
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-            NSData *imageData = [NSData dataWithContentsOfURL:posterUrl];
+            NSString *imageUrlString = [NSString stringWithFormat:@"%@/Items/%@/Images/Primary?quality=50&height=660&width=440", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"], showId];
+            NSURL *imageUrl = [NSURL URLWithString:imageUrlString];
+            NSData *imageData = [NSData dataWithContentsOfURL:imageUrl];
             if (imageData) {
-                UIImage *posterImage = [UIImage imageWithData:imageData];
-                if (posterImage) {
-                    self.imageCache[showId] = posterImage;
+                UIImage *image = [UIImage imageWithData:imageData];
+                if (image) {
+                    [self.imageCache setObject:image forKey:showId];
+                    
+                    [Artwork saveArtworkInBackground:imageData forId:showId mainContext:self.managedObjectContext completion:nil];
                     
                     dispatch_async(dispatch_get_main_queue(), ^{
-                        UITableViewCell *updateCell = [tableView cellForRowAtIndexPath:indexPath];
+                        UITableViewCell *updateCell = [weakTableView cellForRowAtIndexPath:indexPath];
                         if (updateCell) {
-                            updateCell.imageView.image = posterImage;
+                            updateCell.imageView.image = image;
                             [updateCell setNeedsLayout];
                         }
                     });
                 }
             }
         });
-        }
     }
     
     return cell;

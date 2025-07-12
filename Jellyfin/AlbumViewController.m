@@ -177,7 +177,6 @@
     NSDictionary *song = self.music[indexPath.row];
     cell.textLabel.text = song[@"Name"];
     cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ • %@", song[@"Artists"][0], song[@"Album"]];
-    cell.imageView.image = [UIImage imageNamed:@"placeholder"];
     return cell;
 }
 
@@ -198,7 +197,7 @@
     NSURL *coverUrl = [NSURL URLWithString:coverUrlString];
     NSURL *songUrl = [NSURL URLWithString:[NSString stringWithFormat:@"%@/Audio/%@/stream?static=true", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"], songId]];
     
-    __block UIImage *coverImage = [UIImage imageNamed:@"placeholder"];
+    __block UIImage *coverImage = [UIImage imageNamed:@"PlaceholderCover"];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
         NSData *imageData = [NSData dataWithContentsOfURL:coverUrl];
         if (imageData) {

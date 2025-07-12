@@ -37,51 +37,68 @@
     [UIApplication sharedApplication].beginReceivingRemoteControlEvents;
     
     self.view.backgroundColor = [UIColor whiteColor];
+    
     UIImageView *backgroundImageView = [[UIImageView alloc] initWithFrame:self.view.bounds];
-    backgroundImageView.image = self.albumArt;
+    backgroundImageView.image = self.albumArt ?: [UIImage imageNamed:@"PlaceholderCover"];
     backgroundImageView.contentMode = UIViewContentModeScaleAspectFill;
     backgroundImageView.clipsToBounds = YES;
+    backgroundImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self.view addSubview:backgroundImageView];
     
     UIToolbar *blurToolbar = [[UIToolbar alloc] initWithFrame:backgroundImageView.bounds];
     blurToolbar.barStyle = UIBarStyleBlack;
     blurToolbar.translucent = YES;
+    blurToolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [backgroundImageView addSubview:blurToolbar];
     
     self.scrollView = [[UIScrollView alloc] initWithFrame:self.view.bounds];
-    NSLog(@"%lu", (unsigned long)UIViewAutoresizingFlexibleHeight);
     self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self.view addSubview:self.scrollView];
     
-    self.albumArtImageView = [[UIImageView alloc] initWithImage:self.albumArt];
+    CGFloat padding = 20;
+    CGFloat scrollWidth = self.scrollView.frame.size.width;
+    CGFloat maxAlbumArtHeight = self.view.frame.size.height * 0.5;
+    CGFloat imageWidth = scrollWidth - padding * 2;
+    CGFloat imageHeight = MIN(imageWidth, maxAlbumArtHeight);
+    
+    self.albumArtImageView = [[UIImageView alloc] initWithImage:self.albumArt ?: [UIImage imageNamed:@"PlaceholderCover"]];
     self.albumArtImageView.contentMode = UIViewContentModeScaleAspectFit;
-    self.albumArtImageView.frame = CGRectMake(20, 20, self.view.frame.size.width - 40, self.view.frame.size.width - 40);
+    self.albumArtImageView.frame = CGRectMake(padding, padding, imageWidth, imageHeight);
     [self.scrollView addSubview:self.albumArtImageView];
     
-    self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, CGRectGetMaxY(self.albumArtImageView.frame) + 10, self.view.frame.size.width - 40, 30)];
+    CGFloat labelWidth = scrollWidth - padding * 2;
+    CGFloat currentY = CGRectGetMaxY(self.albumArtImageView.frame) + 10;
+    
+    self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(padding, currentY, labelWidth, 30)];
     self.titleLabel.text = self.songTitle ?: @"Unknown Song";
     self.titleLabel.textAlignment = NSTextAlignmentCenter;
     self.titleLabel.textColor = [UIColor whiteColor];
     self.titleLabel.font = [UIFont boldSystemFontOfSize:20];
+    self.titleLabel.backgroundColor = [UIColor clearColor];
     [self.scrollView addSubview:self.titleLabel];
     
-    self.albumLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, CGRectGetMaxY(self.titleLabel.frame) + 5, self.view.frame.size.width - 40, 20)];
+    currentY = CGRectGetMaxY(self.titleLabel.frame) + 5;
+    
+    self.albumLabel = [[UILabel alloc] initWithFrame:CGRectMake(padding, currentY, labelWidth, 20)];
     self.albumLabel.text = self.albumName ?: @"Unknown Album";
     self.albumLabel.textAlignment = NSTextAlignmentCenter;
     self.albumLabel.font = [UIFont systemFontOfSize:18];
     self.albumLabel.textColor = [UIColor whiteColor];
+    self.albumLabel.backgroundColor = [UIColor clearColor];
     [self.scrollView addSubview:self.albumLabel];
     
-    self.artistLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, CGRectGetMaxY(self.albumLabel.frame) + 5, self.view.frame.size.width - 40, 20)];
+    currentY = CGRectGetMaxY(self.albumLabel.frame) + 5;
+    
+    self.artistLabel = [[UILabel alloc] initWithFrame:CGRectMake(padding, currentY, labelWidth, 20)];
     self.artistLabel.text = self.artistName ?: @"Unknown Artist";
     self.artistLabel.textAlignment = NSTextAlignmentCenter;
     self.artistLabel.font = [UIFont systemFontOfSize:16];
     self.artistLabel.textColor = [UIColor whiteColor];
-    [self.scrollView addSubview:self.artistLabel];
-    //ios <7 is EVIL!
-    self.titleLabel.backgroundColor = [UIColor clearColor];
-    self.albumLabel.backgroundColor = [UIColor clearColor];
     self.artistLabel.backgroundColor = [UIColor clearColor];
+    [self.scrollView addSubview:self.artistLabel];
+    
+    self.scrollView.contentSize = CGSizeMake(scrollWidth, CGRectGetMaxY(self.artistLabel.frame) + 20);
+
     self.tabBarController.tabBar.hidden = YES;
     CGRect tabBarFrame = self.tabBarController.tabBar.frame;
     CGFloat toolbarHeight = tabBarFrame.size.height;
@@ -224,7 +241,7 @@
     
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
         NSData *imageData = [NSData dataWithContentsOfURL:coverUrl];
-        UIImage *coverImage = imageData ? [UIImage imageWithData:imageData] : [UIImage imageNamed:@"placeholder"];
+        UIImage *coverImage = imageData ? [UIImage imageWithData:imageData] : [UIImage imageNamed:@"PlaceholderCover"];
         dispatch_async(dispatch_get_main_queue(), ^{
             self.albumArtImageView.image = coverImage;
             AVPlayerItem *nextItem = [AVPlayerItem playerItemWithURL:songUrl];

@@ -17,6 +17,9 @@
 		869763D92CFB9D8C005021D3 /* SVProgressHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 869763D72CFB9D8C005021D3 /* SVProgressHUD.m */; };
 		869763E92CFBF82A005021D3 /* MoviesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 869763E82CFBF82A005021D3 /* MoviesViewController.m */; };
 		869763EC2CFC04E2005021D3 /* AlbumViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 869763EB2CFC04E2005021D3 /* AlbumViewController.m */; };
+		86F89DD72E2276D0009BB9D6 /* MediaCacheModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 86F89DD52E2276D0009BB9D6 /* MediaCacheModel.xcdatamodeld */; };
+		86F89DDA2E22772E009BB9D6 /* ArtworkCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 86F89DD92E22772E009BB9D6 /* ArtworkCache.m */; };
+		86F89DDD2E227A72009BB9D6 /* Artwork.m in Sources */ = {isa = PBXBuildFile; fileRef = 86F89DDC2E227A72009BB9D6 /* Artwork.m */; };
 		86FEE9092CFB4FE9001F7776 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 86FEE9082CFB4FE9001F7776 /* Foundation.framework */; };
 		86FEE90B2CFB4FE9001F7776 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 86FEE90A2CFB4FE9001F7776 /* CoreGraphics.framework */; };
 		86FEE90D2CFB4FE9001F7776 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 86FEE90C2CFB4FE9001F7776 /* UIKit.framework */; };
@@ -66,6 +69,11 @@
 		869763E82CFBF82A005021D3 /* MoviesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MoviesViewController.m; sourceTree = "<group>"; };
 		869763EA2CFC04E2005021D3 /* AlbumViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlbumViewController.h; sourceTree = "<group>"; };
 		869763EB2CFC04E2005021D3 /* AlbumViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AlbumViewController.m; sourceTree = "<group>"; };
+		86F89DD62E2276D0009BB9D6 /* MediaCacheModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = MediaCacheModel.xcdatamodel; sourceTree = "<group>"; };
+		86F89DD82E22772E009BB9D6 /* ArtworkCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ArtworkCache.h; sourceTree = "<group>"; };
+		86F89DD92E22772E009BB9D6 /* ArtworkCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ArtworkCache.m; sourceTree = "<group>"; };
+		86F89DDB2E227A72009BB9D6 /* Artwork.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Artwork.h; sourceTree = "<group>"; };
+		86F89DDC2E227A72009BB9D6 /* Artwork.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Artwork.m; sourceTree = "<group>"; };
 		86FEE9052CFB4FE9001F7776 /* Jellyfin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Jellyfin.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		86FEE9082CFB4FE9001F7776 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		86FEE90A2CFB4FE9001F7776 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -160,6 +168,11 @@
 		86FEE90E2CFB4FE9001F7776 /* Jellyfin */ = {
 			isa = PBXGroup;
 			children = (
+				86F89DDB2E227A72009BB9D6 /* Artwork.h */,
+				86F89DDC2E227A72009BB9D6 /* Artwork.m */,
+				86F89DD52E2276D0009BB9D6 /* MediaCacheModel.xcdatamodeld */,
+				86F89DD82E22772E009BB9D6 /* ArtworkCache.h */,
+				86F89DD92E22772E009BB9D6 /* ArtworkCache.m */,
 				86FEE9422CFB6565001F7776 /* EpisodesViewController.h */,
 				86FEE9432CFB6565001F7776 /* EpisodesViewController.m */,
 				86FEE9172CFB4FE9001F7776 /* AppDelegate.h */,
@@ -335,7 +348,10 @@
 				863FE2CF2D6A72900059FD23 /* LoginViewController.m in Sources */,
 				86FEE9442CFB6565001F7776 /* EpisodesViewController.m in Sources */,
 				869763EC2CFC04E2005021D3 /* AlbumViewController.m in Sources */,
+				86F89DDA2E22772E009BB9D6 /* ArtworkCache.m in Sources */,
 				869763D02CFB92B7005021D3 /* MusicViewController.m in Sources */,
+				86F89DD72E2276D0009BB9D6 /* MediaCacheModel.xcdatamodeld in Sources */,
+				86F89DDD2E227A72009BB9D6 /* Artwork.m in Sources */,
 				86FEE9192CFB4FE9001F7776 /* AppDelegate.m in Sources */,
 				869763E92CFBF82A005021D3 /* MoviesViewController.m in Sources */,
 				863FE2CC2D6A68D80059FD23 /* MovieViewController.m in Sources */,
@@ -566,6 +582,19 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		86F89DD52E2276D0009BB9D6 /* MediaCacheModel.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				86F89DD62E2276D0009BB9D6 /* MediaCacheModel.xcdatamodel */,
+			);
+			currentVersion = 86F89DD62E2276D0009BB9D6 /* MediaCacheModel.xcdatamodel */;
+			path = MediaCacheModel.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = 86FEE8FD2CFB4FE9001F7776 /* Project object */;
 }

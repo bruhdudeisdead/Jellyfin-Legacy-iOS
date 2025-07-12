@@ -2,14 +2,19 @@
 //  AppDelegate.m
 //  Jellyfin
 //
-//  Created by Jack on 11/30/24.
+//  Created by bruhdude on 11/30/24.
 //  Copyright (c) 2024 DumbStupidStuff. All rights reserved.
 //
 
 #import "AppDelegate.h"
+#import <CoreData/CoreData.h>
 #import "LoginViewController.h"
 
 @implementation AppDelegate
+
+NSManagedObjectContext *_managedObjectContext;
+NSManagedObjectModel *_managedObjectModel;
+NSPersistentStoreCoordinator *_persistentStoreCoordinator;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
@@ -69,5 +74,78 @@
 {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
 }
+
+- (void)saveContext {
+    NSError *error = nil;
+    NSManagedObjectContext *context = self.managedObjectContext;
+    if (context != nil) {
+        if ([context hasChanges] && ![context save:&error]) {
+            NSLog(@"Unresolved error saving context: %@, %@", error, [error userInfo]);
+        }
+    }
+}
+
+- (NSManagedObjectContext *)managedObjectContext {
+    if (_managedObjectContext != nil) return _managedObjectContext;
+    
+    NSPersistentStoreCoordinator *coordinator = [self persistentStoreCoordinator];
+    if (!coordinator) return nil;
+    
+    _managedObjectContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSMainQueueConcurrencyType];
+    [_managedObjectContext setPersistentStoreCoordinator:coordinator];
+    
+    return _managedObjectContext;
+}
+
+- (NSManagedObjectModel *)managedObjectModel {
+    if (_managedObjectModel != nil) return _managedObjectModel;
+    
+    NSURL *modelURL = [[NSBundle mainBundle] URLForResource:@"MediaCacheModel" withExtension:@"momd"];
+    _managedObjectModel = [[NSManagedObjectModel alloc] initWithContentsOfURL:modelURL];
+    
+    return _managedObjectModel;
+}
+
+- (NSPersistentStoreCoordinator *)persistentStoreCoordinator {
+    if (_persistentStoreCoordinator != nil) return _persistentStoreCoordinator;
+    
+    NSURL *storeURL = [[self applicationDocumentsDirectory] URLByAppendingPathComponent:@"MediaCache.sqlite"];
+    NSError *error = nil;
+    
+    _persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc]
+                                   initWithManagedObjectModel:[self managedObjectModel]];
+    
+    NSDictionary *options = @{
+                              NSMigratePersistentStoresAutomaticallyOption: @YES,
+                              NSInferMappingModelAutomaticallyOption: @YES,
+                              NSPersistentStoreFileProtectionKey: NSFileProtectionNone
+                              };
+    
+    if (![_persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType
+                                                   configuration:nil
+                                                             URL:storeURL
+                                                         options:options
+                                                           error:&error]) {
+        NSLog(@"Failed to add persistent store: %@", error.localizedDescription);
+        NSLog(@"Detailed error: %@", error.userInfo);
+        
+        [[NSFileManager defaultManager] removeItemAtURL:storeURL error:nil];
+        NSLog(@"Deleted corrupted store. Attempting to recreate...");
+         
+        if (![_persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:options error:&error]) {
+            NSLog(@"Failed again after deleting store: %@", error.localizedDescription);
+            NSLog(@"Detailed error: %@", error.userInfo);
+        } else {
+             NSLog(@"Successfully recreated store after deleting");
+        }
+    }
+    
+    return _persistentStoreCoordinator;
+}
+
+- (NSURL *)applicationDocumentsDirectory {
+    return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
+}
+
 
 @end

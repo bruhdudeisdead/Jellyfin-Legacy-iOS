@@ -3,17 +3,17 @@
 //  Jellyfin
 //
 //  Created by bruhdude on 11/30/24.
-//  Copyright (c) 2024 DumbStupidStuff. All rights reserved.
+//  Copyright (c) 2024 bruhdude. All rights reserved.
 //
 
 #import "MoviesViewController.h"
 #import "MovieViewController.h"
 #import "SVProgressHUD/SVProgressHUD.h"
-#include <sys/sysctl.h>
 #import <MediaPlayer/MediaPlayer.h>
 #import <AVFoundation/AVFoundation.h>
 #import "Artwork.h"
 #import "AppDelegate.h"
+#import "JellyfinClient.h"
 
 @interface MoviesViewController ()
 
@@ -26,71 +26,6 @@
 @end
 
 @implementation MoviesViewController
-
-- (NSString *)deviceModelIdentifier {
-    size_t size;
-    sysctlbyname("hw.machine", NULL, &size, NULL, 0);
-    char *machine = malloc(size);
-    sysctlbyname("hw.machine", machine, &size, NULL, 0);
-    NSString *identifier = [NSString stringWithUTF8String:machine];
-    free(machine);
-    return identifier;
-}
-
-- (NSString *)deviceName {
-    NSString *modelIdentifier = [self deviceModelIdentifier];
-    NSDictionary *modelMapping = @{
-                                   //scary
-                                   @"x86_64": @"Xcode Simulator",
-                                   //iphone
-                                   @"iPhone2,1": @"iPhone 3GS",
-                                   @"iPhone3,1": @"iPhone 4",
-                                   @"iPhone3,2": @"iPhone 4",
-                                   @"iPhone3,3": @"iPhone 4",
-                                   @"iPhone4,1": @"iPhone 4S",
-                                   @"iPhone5,1": @"iPhone 5",
-                                   @"iPhone5,2": @"iPhone 5",
-                                   @"iPhone5,3": @"iPhone 5c",
-                                   @"iPhone5,4": @"iPhone 5c",
-                                   @"iPhone6,1": @"iPhone 5s",
-                                   @"iPhone6,2": @"iPhone 5s",
-                                   @"iPhone7,1": @"iPhone 6 Plus",
-                                   @"iPhone7,2": @"iPhone 6",
-                                   // no iphone 6s and later, screw you
-                                   //ipad
-                                   @"iPad2,1": @"iPad 2",
-                                   @"iPad2,2": @"iPad 2",
-                                   @"iPad2,3": @"iPad 2",
-                                   @"iPad2,4": @"iPad 2",
-                                   @"iPad3,1": @"iPad 3",
-                                   @"iPad3,2": @"iPad 3",
-                                   @"iPad3,3": @"iPad 3",
-                                   @"iPad3,4": @"iPad 4",
-                                   @"iPad3,5": @"iPad 4",
-                                   @"iPad3,6": @"iPad 4",
-                                   @"iPad2,5": @"iPad mini",
-                                   @"iPad2,6": @"iPad mini",
-                                   @"iPad2,7": @"iPad mini",
-                                   @"iPad4,1": @"iPad Air",
-                                   @"iPad4,2": @"iPad Air",
-                                   @"iPad4,4": @"iPad mini 2",
-                                   @"iPad4,5": @"iPad mini 2",
-                                   @"iPad5,3": @"iPad Air 2",
-                                   @"iPad5,4": @"iPad Air 2",
-                                   @"iPad4,7": @"iPad mini 3",
-                                   @"iPad4,8": @"iPad mini 3",
-                                   // no later, screw you
-                                   //ipod touch
-                                   @"iPod4,1": @"iPod touch (4th generation)",
-                                   @"iPod5,1": @"iPod touch (5th generation)",
-                                   @"iPod7,1": @"iPod touch (6th generation)",
-                                   //s
-                                   };
-    
-    NSString *friendlyName = modelMapping[modelIdentifier];
-    NSLog(@"%@", modelIdentifier);
-    return friendlyName ?: modelIdentifier;
-}
 
 - (void)viewDidLoad
 {
@@ -120,50 +55,28 @@
 }
 
 - (void)fetchMovies {
-    NSString *serverUrl = [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"];
-    NSString *token = [[NSUserDefaults standardUserDefaults] stringForKey:@"token"];
-    if(!serverUrl || !token) {
-        NSLog(@"server url or token is missing.");
+    NSDictionary *params = @{
+                             @"IncludeItemTypes": @"Movie",
+                             @"Recursive": @"true",
+                             @"SortBy": @"Name",
+                             @"SortOrder": @"Ascending"
+                             };
+    
+    [[JellyfinClient sharedClient] getItemsWithParameters:params completion:^(NSDictionary *response, NSError *error) {
+        if (error) {
+            NSLog(@"Error fetching data: %@", error.localizedDescription);
+            [SVProgressHUD dismiss];
+            [self.refreshControl endRefreshing];
+            return;
+        }
+        
+        self.movies = response[@"Items"];
+        if ([self.movies isKindOfClass:[NSArray class]]) {
+            [self.tableView reloadData];
+        }
+        [self.refreshControl endRefreshing];
         [SVProgressHUD dismiss];
-        return;
-    }
-    NSString *urlString = [NSString stringWithFormat:@"%@/Items?IncludeItemTypes=Movie&ParentId=f137a2dd21bbc1b99aa5c0f6bf02a805&SortBy=Name&SortOrder=Ascending", serverUrl];
-    NSURL *url = [NSURL URLWithString:urlString];
-    
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
-    NSInteger deviceId = [[NSUserDefaults standardUserDefaults] integerForKey:@"device_id"];
-    NSString *deviceName = [self deviceName];
-    NSString *authHeader = [NSString stringWithFormat:@"MediaBrowser Client=\"Jellyfin for Legacy iOS\", Device=\"%@\", DeviceId=\"%ld\", Version=\"1.0\", Token=\"%@\"", deviceName, (long)deviceId, token];
-    [request setValue:authHeader forHTTPHeaderField:@"Authorization"];
-    
-    [NSURLConnection sendAsynchronousRequest:request
-                                       queue:[NSOperationQueue mainQueue]
-                           completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
-                               if(connectionError) {
-                                   NSLog(@"Error fetching data: %@", connectionError.localizedDescription);
-                                   [SVProgressHUD dismiss];
-                                   [self.refreshControl endRefreshing];
-                                   return;
-                               }
-                               if(data) {
-                                   NSError *jsonError = nil;
-                                   NSDictionary *jsonResponse = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
-                                   if(jsonError) {
-                                       NSLog(@"Error parsing JSON: %@", jsonError.localizedDescription);
-                                       [SVProgressHUD dismiss];
-                                       [self.refreshControl endRefreshing];
-                                       return;
-                                   }
-                                   self.movies = jsonResponse[@"Items"];
-                                   if([self.movies isKindOfClass:[NSArray class]]) {
-                                       dispatch_async(dispatch_get_main_queue(), ^{
-                                           [self.tableView reloadData];
-                                           [self.refreshControl endRefreshing];
-                                           [SVProgressHUD dismiss];
-                                       });
-                                   }
-                               }
-                           }];
+    }];
 }
 
 #pragma mark - UITableViewDataSource
@@ -185,40 +98,21 @@
     cell.textLabel.text = movie[@"Name"];
     cell.detailTextLabel.text = [NSString stringWithFormat:@"Rated %@ • %@", movie[@"OfficialRating"], movie[@"ProductionYear"]];
     cell.imageView.image = [UIImage imageNamed:@"PlaceholderPoster"];
+    
     BOOL loadImagesPoster = [[NSUserDefaults standardUserDefaults] boolForKey:@"image_load_posters"];
     if (loadImagesPoster == YES) {
         NSString *movieId = movie[@"Id"];
-        ArtworkCache *cachedArtwork = [Artwork fetchArtworkForId:movieId inContext:self.managedObjectContext];
-        if (cachedArtwork) {
-            UIImage *image = [UIImage imageWithData:cachedArtwork.imageData];
-            if (image) {
-                [self.imageCache setObject:image forKey:movieId];
-                cell.imageView.image = image;
+        UIImage *cachedImage = [Artwork loadArtworkForId:movieId inContext:self.managedObjectContext imageCache:self.imageCache quality:80 size:CGSizeMake(440, 660) completion:^(UIImage *image) {
+            UITableViewCell *updateCell = [weakTableView cellForRowAtIndexPath:indexPath];
+            if (updateCell) {
+                updateCell.imageView.image = image;
+                [updateCell setNeedsLayout];
             }
-        } else {
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-                NSString *imageUrlString = [NSString stringWithFormat:@"%@/Items/%@/Images/Primary?quality=80&height=660&width=440", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"], movieId];
-                NSURL *imageUrl = [NSURL URLWithString:imageUrlString];
-                NSData *imageData = [NSData dataWithContentsOfURL:imageUrl];
-                if (imageData) {
-                    UIImage *image = [UIImage imageWithData:imageData];
-                    if (image) {
-                        [self.imageCache setObject:image forKey:movieId];
-                        
-                        [Artwork saveArtworkInBackground:imageData forId:movieId mainContext:self.managedObjectContext completion:nil];
-                        
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            UITableViewCell *updateCell = [weakTableView cellForRowAtIndexPath:indexPath];
-                            if (updateCell) {
-                                updateCell.imageView.image = image;
-                                [updateCell setNeedsLayout];
-                            }
-                        });
-                    }
-                }
-            });
+        }];
+        
+        if (cachedImage) {
+            cell.imageView.image = cachedImage;
         }
-
     }
     return cell;
 }
@@ -226,110 +120,67 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     NSDictionary *selectedMovie = self.movies[indexPath.row];
     NSString *movieId = selectedMovie[@"Id"];
-    NSString *serverUrl = [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"];
-    NSString *token = [[NSUserDefaults standardUserDefaults] stringForKey:@"token"];
-    if(!serverUrl || !token) {
-        NSLog(@"server url or token is missing.");
-        [SVProgressHUD dismiss];
-        return;
-    }
-    NSString *urlString = [NSString stringWithFormat:@"%@/Items/%@", serverUrl, movieId];
-    NSURL *url = [NSURL URLWithString:urlString];
-    NSLog(@"%@", urlString);
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
-    NSInteger deviceId = [[NSUserDefaults standardUserDefaults] integerForKey:@"device_id"];
-    NSString *deviceName = [self deviceName];
-    NSString *authHeader = [NSString stringWithFormat:@"MediaBrowser Client=\"Jellyfin for Legacy iOS\", Device=\"%@\", DeviceId=\"%ld\", Version=\"1.0\", Token=\"%@\"", deviceName, (long)deviceId, token];
-    [request setValue:authHeader forHTTPHeaderField:@"Authorization"];
-    NSLog(@"%@", authHeader);
+    
     [SVProgressHUD showWithStatus:@"Loading..."];
-    [NSURLConnection sendAsynchronousRequest:request
-                                       queue:[NSOperationQueue mainQueue]
-                           completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
-                               if(connectionError) {
-                                   NSLog(@"Error fetching data: %@", connectionError.localizedDescription);
-                                   [SVProgressHUD dismiss];
-                                   return;
-                               }
-                               if(data) {
-                                   NSString *rawString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-                                   NSLog(@"Raw JSON Response: %@", rawString);
-
-                                   NSError *jsonError = nil;
-                                   NSDictionary *jsonResponse = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
-                                   if(jsonError) {
-                                       NSLog(@"Error parsing JSON: %@", jsonError.localizedDescription);
-                                       [SVProgressHUD dismiss];
-                                       return;
-                                   }
-                                   self.selectedMovie2 = jsonResponse;
-                                       dispatch_async(dispatch_get_main_queue(), ^{
-                                           NSString *posterUrlString = [NSString stringWithFormat:@"%@/Items/%@/Images/Primary", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"], movieId];
-                                           NSURL *posterUrl = [NSURL URLWithString:posterUrlString];
-                                           
-                                           __block UIImage *posterImage = [UIImage imageNamed:@"placeholder"];
-                                           dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-                                               NSData *imageData = [NSData dataWithContentsOfURL:posterUrl];
-                                               if (imageData) {
-                                                   posterImage = [UIImage imageWithData:imageData];
-                                               }
-                                               dispatch_async(dispatch_get_main_queue(), ^{
-                                                   MovieViewController *movieVC = [[MovieViewController alloc] init];
-                                                   
-                                                   movieVC.movieId = selectedMovie[@"Id"];
-                                                   movieVC.moviePoster = posterImage;
-                                                   movieVC.movieTitle = self.selectedMovie2[@"Name"];
-                                                   movieVC.movieTagline = self.selectedMovie2[@"Taglines"][0];
-                                                   movieVC.movieProductionYear = self.selectedMovie2[@"ProductionYear"];
-                                                   movieVC.movieOverview = self.selectedMovie2[@"Overview"];
-                                                   
-                                                   [self.navigationController pushViewController:movieVC animated:YES];
-                                                   [SVProgressHUD dismiss];
-                                               });
-                                           });
-
-                                       });
-                               }
-                           }];
     
-    //fuckass
-    //NSDictionary *movie = self.movies[indexPath.row];
-    //NSString *videoId = movie[@"Id"];
+    [[JellyfinClient sharedClient] getItem:movieId completion:^(NSDictionary *response, NSError *error) {
+        if (error) {
+            NSLog(@"Error fetching data: %@", error.localizedDescription);
+            [SVProgressHUD dismiss];
+            return;
+        }
+        
+        self.selectedMovie2 = response;
+        
+        __block UIImage *posterImage = [UIImage imageNamed:@"placeholder"];
+        
+        [Artwork loadArtworkForId:movieId inContext:self.managedObjectContext imageCache:self.imageCache quality:90 size:CGSizeZero completion:^(UIImage *image) {
+            if (image) {
+                posterImage = image;
+            }
+            MovieViewController *movieVC = [[MovieViewController alloc] init];
+            movieVC.movieId = selectedMovie[@"Id"];
+            movieVC.moviePoster = posterImage;
+            movieVC.movieTitle = self.selectedMovie2[@"Name"];
+            if ([self.selectedMovie2[@"Taglines"] count] > 0) {
+                movieVC.movieTagline = self.selectedMovie2[@"Taglines"][0];
+            }
+            movieVC.movieProductionYear = self.selectedMovie2[@"ProductionYear"];
+            movieVC.movieOverview = self.selectedMovie2[@"Overview"];
+            
+            [self.navigationController pushViewController:movieVC animated:YES];
+            [SVProgressHUD dismiss];
+        }];
+        
+        UIImage *syncImage = [Artwork loadArtworkForId:movieId inContext:self.managedObjectContext imageCache:self.imageCache quality:90 size:CGSizeZero completion:^(UIImage *image) {
+            posterImage = image;
+            [self pushMovieVC:selectedMovie poster:posterImage];
+        }];
+        
+        if (syncImage) {
+            posterImage = syncImage;
+            [self pushMovieVC:selectedMovie poster:posterImage];
+        }
+        
+    }];
     
-    //NSString *videoUrlString = [NSString stringWithFormat:@"%@/Videos/%@/stream.mp4?static=true&container=mp4", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"], videoId];
-    //NSURL *videoUrl = [NSURL URLWithString:videoUrlString];
-    
-    //if (!videoUrl) {
-    //    NSLog(@"Error: Invalid video URL for video ID: %@", videoId);
-    //    [self showError:@"Invalid video URL"];
-    //    return;
-    //}
-    
-    //MPMoviePlayerViewController *moviePlayerVC = [[MPMoviePlayerViewController alloc] initWithContentURL:videoUrl];
-    
-    //if (!moviePlayerVC) {
-    //    NSLog(@"Error: Failed to create movie player view controller");
-    //    [self showError:@"Failed to load the video player"];
-    //    return;
-    //}
-    
-    //NSLog(@"Presenting movie player with URL: %@", videoUrl);
-    //[self presentMoviePlayerViewControllerAnimated:moviePlayerVC];
-    
-    //[moviePlayerVC.moviePlayer play];
-    //NSLog(@"Started playback for video: %@", videoId);
-    
-    //[[NSNotificationCenter defaultCenter] addObserver:self
-    //                                         selector:@selector(moviePlayerDidFinish:)
-    //                                             name:MPMoviePlayerPlaybackDidFinishNotification
-    //                                           object:moviePlayerVC.moviePlayer];
-    
-    //[[NSNotificationCenter defaultCenter] addObserver:self
-    //                                         selector:@selector(moviePlayerPlaybackError:)
-    //                                             name:MPMoviePlayerLoadStateDidChangeNotification
-    //                                           object:moviePlayerVC.moviePlayer];
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
+}
+
+- (void)pushMovieVC:(NSDictionary *)selectedMovie poster:(UIImage *)posterImage {
+    MovieViewController *movieVC = [[MovieViewController alloc] init];
+    movieVC.movieId = selectedMovie[@"Id"];
+    movieVC.moviePoster = posterImage;
+    movieVC.movieTitle = self.selectedMovie2[@"Name"];
+    if ([self.selectedMovie2[@"Taglines"] count] > 0) {
+        movieVC.movieTagline = self.selectedMovie2[@"Taglines"][0];
     }
+    movieVC.movieProductionYear = self.selectedMovie2[@"ProductionYear"];
+    movieVC.movieOverview = self.selectedMovie2[@"Overview"];
+    
+    [self.navigationController pushViewController:movieVC animated:YES];
+    [SVProgressHUD dismiss];
+}
 
 
 #pragma mark - UITableViewDelegate

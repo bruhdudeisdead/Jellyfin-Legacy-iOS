@@ -3,7 +3,7 @@
 //  Jellyfin
 //
 //  Created by bruhdude on 11/30/24.
-//  Copyright (c) 2024 DumbStupidStuff. All rights reserved.
+//  Copyright (c) 2024 bruhdude. All rights reserved.
 //
 
 #import "AppDelegate.h"
@@ -18,8 +18,6 @@ NSPersistentStoreCoordinator *_persistentStoreCoordinator;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    //[UINavigationBar.appearance setBackgroundImage:[UIImage imageNamed:@"UITitlebarBG"] forBarMetrics:UIBarMetricsDefault];
-    // Override point for customization after application launch.
     if([[NSUserDefaults standardUserDefaults] integerForKey:@"device_id"] == 0) {
         int randomDeviceId = arc4random_uniform(100000);
         [[NSUserDefaults standardUserDefaults] setInteger:randomDeviceId forKey:@"device_id"];
@@ -28,18 +26,15 @@ NSPersistentStoreCoordinator *_persistentStoreCoordinator;
     
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     
-    // Retrieve the stored token
     NSString *token = [[NSUserDefaults standardUserDefaults] stringForKey:@"token"];
     
     UIViewController *rootViewController;
     
     if (token == nil || [token isEqualToString:@""]) {
-        // No token, instantiate LoginViewController programmatically
-        rootViewController = [[LoginViewController alloc] init]; // Assuming you have an init method
+        rootViewController = [[LoginViewController alloc] init];
     } else {
-        // Token exists, instantiate the Main Tab Bar Controller from the storyboard
         UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-        rootViewController = [storyboard instantiateInitialViewController]; // Loads the TabBarController (since it's the initial controller)
+        rootViewController = [storyboard instantiateInitialViewController];
     }
     
     self.window.rootViewController = rootViewController;

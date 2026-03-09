@@ -3,7 +3,7 @@
 //  Jellyfin
 //
 //  Created by bruhdude on 7/12/25.
-//  Copyright (c) 2025 DumbStupidStuff. All rights reserved.
+//  Copyright (c) 2025 bruhdude. All rights reserved.
 //
 
 #import "Artwork.h"
@@ -52,7 +52,6 @@
             NSLog(@"Error saving artwork in background: %@", error);
         }
         
-        // Save parent context on main thread
         [mainContext performBlock:^{
             NSError *parentError = nil;
             if (![mainContext save:&parentError]) {
@@ -65,5 +64,47 @@
     }];
 }
 
++ (UIImage *)loadArtworkForId:(NSString *)itemId inContext:(NSManagedObjectContext *)context imageCache:(NSCache *)imageCache quality:(NSInteger)quality size:(CGSize)size completion:(void (^)(UIImage *image))completion {
+    if (!itemId) return nil;
+
+    UIImage *cachedImage = [imageCache objectForKey:itemId];
+    if (cachedImage) {
+        return cachedImage;
+    }
+
+    ArtworkCache *artwork = [self fetchArtworkForId:itemId inContext:context];
+    if (artwork && artwork.imageData) {
+        UIImage *image = [UIImage imageWithData:artwork.imageData];
+        if (image) {
+            [imageCache setObject:image forKey:itemId];
+            return image;
+        }
+    }
+
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+        NSString *serverUrl = [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"];
+        NSMutableString *imageUrlString = [NSMutableString stringWithFormat:@"%@/Items/%@/Images/Primary?quality=%ld", serverUrl, itemId, (long)quality];
+        if (size.width > 0 && size.height > 0) {
+            [imageUrlString appendFormat:@"&width=%ld&height=%ld", (long)size.width, (long)size.height];
+        }
+        NSURL *imageUrl = [NSURL URLWithString:imageUrlString];
+        NSData *imageData = [NSData dataWithContentsOfURL:imageUrl];
+        
+        if (imageData) {
+            UIImage *image = [UIImage imageWithData:imageData];
+            if (image) {
+                [imageCache setObject:image forKey:itemId];
+                
+                [self saveArtworkInBackground:imageData forId:itemId mainContext:context completion:nil];
+                
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if (completion) completion(image);
+                });
+            }
+        }
+    });
+    
+    return nil;
+}
 
 @end

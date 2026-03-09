@@ -3,7 +3,7 @@
 //  Jellyfin
 //
 //  Created by Jack on 2/22/25.
-//  Copyright (c) 2025 DumbStupidStuff. All rights reserved.
+//  Copyright (c) 2025 bruhdude. All rights reserved.
 //
 
 #import "MovieViewController.h"
@@ -28,74 +28,115 @@
 {
     [super viewDidLoad];
     self.title = self.movieTitle;
-    // Do any additional setup after loading the view.
     self.view.backgroundColor = [UIColor whiteColor];
     UIImageView *backgroundImageView = [[UIImageView alloc] initWithFrame:self.view.bounds];
     backgroundImageView.image = self.moviePoster;
     backgroundImageView.contentMode = UIViewContentModeScaleAspectFill;
     backgroundImageView.clipsToBounds = YES;
+    backgroundImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self.view addSubview:backgroundImageView];
     
     UIToolbar *blurToolbar = [[UIToolbar alloc] initWithFrame:backgroundImageView.bounds];
     blurToolbar.barStyle = UIBarStyleBlack;
     blurToolbar.translucent = YES;
+    blurToolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [backgroundImageView addSubview:blurToolbar];
     
     self.scrollView = [[UIScrollView alloc] initWithFrame:self.view.bounds];
-    self.scrollView.contentSize = CGSizeMake(self.view.frame.size.width, self.view.frame.size.height + 250); // Adjust content size to fit everything
+    self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self.view addSubview:self.scrollView];
     
     self.moviePosterImageView = [[UIImageView alloc] initWithImage:self.moviePoster];
     self.moviePosterImageView.contentMode = UIViewContentModeScaleAspectFit;
-    self.moviePosterImageView.frame = CGRectMake(20, 20, self.view.frame.size.width - 40, self.view.frame.size.width - 40);
     [self.scrollView addSubview:self.moviePosterImageView];
     
-    self.movieTitleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, CGRectGetMaxY(self.moviePosterImageView.frame) + 10, self.view.frame.size.width - 40, 50)];
+    self.movieTitleLabel = [[UILabel alloc] init];
     self.movieTitleLabel.text = self.movieTitle ?: @"Unknown Movie";
     self.movieTitleLabel.textAlignment = NSTextAlignmentCenter;
     self.movieTitleLabel.textColor = [UIColor whiteColor];
-    self.movieTitleLabel.font = [UIFont systemFontOfSize:20];
+    self.movieTitleLabel.font = [UIFont boldSystemFontOfSize:24];
     self.movieTitleLabel.numberOfLines = 0;
+    self.movieTitleLabel.backgroundColor = [UIColor clearColor];
     [self.scrollView addSubview:self.movieTitleLabel];
     
-    self.movieTaglineLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, CGRectGetMaxY(self.movieTitleLabel.frame) + 5, self.view.frame.size.width - 40, 20)];
-    self.movieTaglineLabel.text = self.movieTagline ?: @"???";
+    self.movieTaglineLabel = [[UILabel alloc] init];
+    self.movieTaglineLabel.text = self.movieTagline ?: @"";
     self.movieTaglineLabel.textAlignment = NSTextAlignmentCenter;
-    self.movieTaglineLabel.font = [UIFont boldSystemFontOfSize:18];
-    self.movieTaglineLabel.textColor = [UIColor whiteColor];
+    self.movieTaglineLabel.font = [UIFont italicSystemFontOfSize:18];
+    self.movieTaglineLabel.textColor = [UIColor lightGrayColor];
     self.movieTaglineLabel.numberOfLines = 0;
+    self.movieTaglineLabel.backgroundColor = [UIColor clearColor];
     [self.scrollView addSubview:self.movieTaglineLabel];
     
-    self.movieOverviewLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, CGRectGetMaxY(self.movieTaglineLabel.frame) + 5, self.view.frame.size.width - 40, 500)];
-    self.movieOverviewLabel.text = self.movieOverview ?: @"Unknown movie. Wow!";
-    self.movieOverviewLabel.textAlignment = NSTextAlignmentCenter;
+    self.movieOverviewLabel = [[UILabel alloc] init];
+    self.movieOverviewLabel.text = self.movieOverview ?: @"No overview available.";
+    self.movieOverviewLabel.textAlignment = NSTextAlignmentLeft;
     self.movieOverviewLabel.font = [UIFont systemFontOfSize:16];
     self.movieOverviewLabel.textColor = [UIColor whiteColor];
     self.movieOverviewLabel.numberOfLines = 0;
+    self.movieOverviewLabel.backgroundColor = [UIColor clearColor];
     [self.scrollView addSubview:self.movieOverviewLabel];
     
-    self.moviePlayButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [self.moviePlayButton setTitle:@"Play" forState:UIControlStateNormal];
-    self.moviePlayButton.titleLabel.font = [UIFont boldSystemFontOfSize:18];
-    self.moviePlayButton.layer.cornerRadius = 5;
-    self.moviePlayButton.clipsToBounds = YES;
+    BOOL isiOS7OrLater = ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7.0);
+    
+    if (isiOS7OrLater) {
+        self.moviePlayButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        [self.moviePlayButton setTitle:@"Play" forState:UIControlStateNormal];
+        self.moviePlayButton.titleLabel.font = [UIFont boldSystemFontOfSize:20];
+        self.moviePlayButton.layer.cornerRadius = 5;
+        self.moviePlayButton.clipsToBounds = YES;
+        self.moviePlayButton.backgroundColor = [UIColor colorWithRed:0.0 green:0.5 blue:1.0 alpha:0.8];
+        [self.moviePlayButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    } else {
+        self.moviePlayButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+        [self.moviePlayButton setTitle:@"Play" forState:UIControlStateNormal];
+        self.moviePlayButton.titleLabel.font = [UIFont boldSystemFontOfSize:20];
+    }
+    
     [self.scrollView addSubview:self.moviePlayButton];
     
-    CGSize taglineSize = [self.movieTaglineLabel sizeThatFits:CGSizeMake(self.view.frame.size.width - 40, CGFLOAT_MAX)];
-    self.movieTaglineLabel.frame = CGRectMake(20, CGRectGetMaxY(self.movieTitleLabel.frame) + 5, self.view.frame.size.width - 40, taglineSize.height);
-    
-    CGSize overviewSize = [self.movieOverviewLabel sizeThatFits:CGSizeMake(self.view.frame.size.width - 40, CGFLOAT_MAX)];
-    self.movieOverviewLabel.frame = CGRectMake(20, CGRectGetMaxY(self.movieTaglineLabel.frame) + 5, self.view.frame.size.width - 40, overviewSize.height);
-    
-    self.moviePlayButton.frame = CGRectMake(20, CGRectGetMaxY(self.movieOverviewLabel.frame) + 10, self.view.frame.size.width - 40, 44);
-    
     [self.moviePlayButton addTarget:self action:@selector(playMovie) forControlEvents:UIControlEventTouchUpInside];
+}
 
-    [self.scrollView addSubview:self.movieOverviewLabel];
-    //ios <7 is EVIL!
-    self.movieTitleLabel.backgroundColor = [UIColor clearColor];
-    self.movieTaglineLabel.backgroundColor = [UIColor clearColor];
-    self.movieOverviewLabel.backgroundColor = [UIColor clearColor];
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    
+    CGFloat width = self.view.bounds.size.width;
+    CGFloat padding = 20.0;
+    CGFloat currentY = 20.0;
+    
+    CGFloat posterHeight = 300;
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        posterHeight = 450;
+    }
+    self.moviePosterImageView.frame = CGRectMake(padding, currentY, width - 2 * padding, posterHeight);
+    currentY += posterHeight + 20;
+    
+    CGSize titleSize = [self.movieTitleLabel sizeThatFits:CGSizeMake(width - 2 * padding, CGFLOAT_MAX)];
+    self.movieTitleLabel.frame = CGRectMake(padding, currentY, width - 2 * padding, titleSize.height);
+    currentY += titleSize.height + 10;
+    
+    if (self.movieTaglineLabel.text.length > 0) {
+        CGSize taglineSize = [self.movieTaglineLabel sizeThatFits:CGSizeMake(width - 2 * padding, CGFLOAT_MAX)];
+        self.movieTaglineLabel.frame = CGRectMake(padding, currentY, width - 2 * padding, taglineSize.height);
+        currentY += taglineSize.height + 15;
+    } else {
+        self.movieTaglineLabel.frame = CGRectZero;
+    }
+    
+    self.moviePlayButton.frame = CGRectMake(padding, currentY, width - 2 * padding, 50);
+    currentY += 50 + 20;
+    
+    CGSize overviewSize = [self.movieOverviewLabel sizeThatFits:CGSizeMake(width - 2 * padding, CGFLOAT_MAX)];
+    self.movieOverviewLabel.frame = CGRectMake(padding, currentY, width - 2 * padding, overviewSize.height);
+    currentY += overviewSize.height + 100;
+    
+    CGFloat minContentHeight = self.view.bounds.size.height + 1;
+    if (currentY < minContentHeight) {
+        currentY = minContentHeight;
+    }
+    
+    self.scrollView.contentSize = CGSizeMake(width, currentY);
 }
 
 - (void)playMovie {
@@ -138,7 +179,6 @@
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
 }
 
 - (void)moviePlayerDidFinish:(NSNotification *)notification {
@@ -168,14 +208,14 @@
 }
 
 /*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
-{
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
-}
-*/
+ #pragma mark - Navigation
+ 
+ // In a storyboard-based application, you will often want to do a little preparation before navigation
+ - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+ {
+ // Get the new view controller using [segue destinationViewController].
+ // Pass the selected object to the new view controller.
+ }
+ */
 
 @end

@@ -16,11 +16,11 @@
 		</dict>
 		<dict>
 			<key>FooterText</key>
-			<string>Here are API related settings. Without adjusting these, the app will not work. To use HTTPS with some instances, you may need to install certain certificates.</string>
+			<string>Here are instance related settings. Without adjusting these, the app will not work. To use HTTPS with some instances, you may need to install certain certificates.</string>
 			<key>Type</key>
 			<string>PSGroupSpecifier</string>
 			<key>Title</key>
-			<string>API Settings</string>
+			<string>Instance Settings</string>
 		</dict>
 		<dict>
 			<key>AutocorrectionType</key>
@@ -31,16 +31,6 @@
 			<string>Instance URL</string>
 			<key>Key</key>
 			<string>server_url</string>
-		</dict>
-		<dict>
-			<key>AutocorrectionType</key>
-			<string>No</string>
-			<key>Type</key>
-			<string>PSTextFieldSpecifier</string>
-			<key>Title</key>
-			<string>API key</string>
-			<key>Key</key>
-			<string>token</string>
 		</dict>
 		<dict>
 			<key>FooterText</key>

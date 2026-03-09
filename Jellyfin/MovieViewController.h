@@ -3,7 +3,7 @@
 //  Jellyfin
 //
 //  Created by Jack on 2/22/25.
-//  Copyright (c) 2025 DumbStupidStuff. All rights reserved.
+//  Copyright (c) 2025 bruhdude. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>

@@ -3,7 +3,7 @@
 //  Jellyfin
 //
 //  Created by bruhdude on 7/12/25.
-//  Copyright (c) 2025 DumbStupidStuff. All rights reserved.
+//  Copyright (c) 2025 bruhdude. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>

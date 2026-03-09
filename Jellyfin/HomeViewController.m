@@ -3,20 +3,23 @@
 //  Jellyfin
 //
 //  Created by bruhdude on 11/30/24.
-//  Copyright (c) 2024 DumbStupidStuff. All rights reserved.
+//  Copyright (c) 2024 bruhdude. All rights reserved.
 //
 
 #import "HomeViewController.h"
 #import "AlbumViewController.h"
-#import "EpisodesViewController.h"
+#import "SeasonsViewController.h"
 #import "Artwork.h"
 #import "AppDelegate.h"
-#include <sys/sysctl.h>
+#import "JellyfinClient.h"
+#import "ProfileViewController.h"
 
 @interface HomeViewController () <UITableViewDelegate, UITableViewDataSource>
 
 @property (nonatomic, strong) UIScrollView *scrollView;
+@property (nonatomic, strong) UILabel *showsHeaderLabel;
 @property (nonatomic, strong) UITableView *showsTableView;
+@property (nonatomic, strong) UILabel *albumsHeaderLabel;
 @property (nonatomic, strong) UITableView *albumsTableView;
 @property (nonatomic, strong) NSArray *shows;
 @property (nonatomic, strong) NSArray *albums;
@@ -27,73 +30,13 @@
 
 @implementation HomeViewController
 
-- (NSString *)deviceModelIdentifier {
-    size_t size;
-    sysctlbyname("hw.machine", NULL, &size, NULL, 0);
-    char *machine = malloc(size);
-    sysctlbyname("hw.machine", machine, &size, NULL, 0);
-    NSString *identifier = [NSString stringWithUTF8String:machine];
-    free(machine);
-    return identifier;
-}
-
-- (NSString *)deviceName {
-    NSString *modelIdentifier = [self deviceModelIdentifier];
-    NSDictionary *modelMapping = @{
-                                   //scary
-                                   @"x86_64": @"Xcode Simulator",
-                                   //iphone
-                                   @"iPhone2,1": @"iPhone 3GS",
-                                   @"iPhone3,1": @"iPhone 4",
-                                   @"iPhone3,2": @"iPhone 4",
-                                   @"iPhone3,3": @"iPhone 4",
-                                   @"iPhone4,1": @"iPhone 4S",
-                                   @"iPhone5,1": @"iPhone 5",
-                                   @"iPhone5,2": @"iPhone 5",
-                                   @"iPhone5,3": @"iPhone 5c",
-                                   @"iPhone5,4": @"iPhone 5c",
-                                   @"iPhone6,1": @"iPhone 5s",
-                                   @"iPhone6,2": @"iPhone 5s",
-                                   @"iPhone7,1": @"iPhone 6 Plus",
-                                   @"iPhone7,2": @"iPhone 6",
-                                   // no iphone 6s and later, screw you
-                                   //ipad
-                                   @"iPad2,1": @"iPad 2",
-                                   @"iPad2,2": @"iPad 2",
-                                   @"iPad2,3": @"iPad 2",
-                                   @"iPad2,4": @"iPad 2",
-                                   @"iPad3,1": @"iPad 3",
-                                   @"iPad3,2": @"iPad 3",
-                                   @"iPad3,3": @"iPad 3",
-                                   @"iPad3,4": @"iPad 4",
-                                   @"iPad3,5": @"iPad 4",
-                                   @"iPad3,6": @"iPad 4",
-                                   @"iPad2,5": @"iPad mini",
-                                   @"iPad2,6": @"iPad mini",
-                                   @"iPad2,7": @"iPad mini",
-                                   @"iPad4,1": @"iPad Air",
-                                   @"iPad4,2": @"iPad Air",
-                                   @"iPad4,4": @"iPad mini 2",
-                                   @"iPad4,5": @"iPad mini 2",
-                                   @"iPad5,3": @"iPad Air 2",
-                                   @"iPad5,4": @"iPad Air 2",
-                                   @"iPad4,7": @"iPad mini 3",
-                                   @"iPad4,8": @"iPad mini 3",
-                                   // no later, screw you
-                                   //ipod touch
-                                   @"iPod4,1": @"iPod touch (4th generation)",
-                                   @"iPod5,1": @"iPod touch (5th generation)",
-                                   @"iPod7,1": @"iPod touch (6th generation)",
-                                   //s
-                                   };
-    
-    NSString *friendlyName = modelMapping[modelIdentifier];
-    NSLog(@"%@", modelIdentifier);
-    return friendlyName ?: modelIdentifier;
-}
-
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    NSString *username = [[NSUserDefaults standardUserDefaults] stringForKey:@"username"] ?: @"Profile";
+    UIBarButtonItem *settingsButton = [[UIBarButtonItem alloc] initWithTitle:username style:UIBarButtonItemStyleBordered target:self action:@selector(openSettings)];
+    self.navigationItem.leftBarButtonItem = settingsButton;
+    
     NSString *token = [[NSUserDefaults standardUserDefaults] objectForKey:@"token"];
     
     NSString *serverUrl = [[NSUserDefaults standardUserDefaults] objectForKey:@"server_url"];
@@ -114,130 +57,121 @@
     self.managedObjectContext = appDelegate.managedObjectContext;
     
     self.scrollView = [[UIScrollView alloc] initWithFrame:self.view.bounds];
-    NSLog(@"%lu", (unsigned long)UIViewAutoresizingFlexibleHeight);
     self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self.view addSubview:self.scrollView];
     
-    UILabel *showsHeader = [[UILabel alloc] initWithFrame:CGRectMake(15, 10, self.view.bounds.size.width - 30, 30)];
-    showsHeader.text = @"Recently Added TV Shows";
-    showsHeader.font = [UIFont boldSystemFontOfSize:18];
-    [self.scrollView addSubview:showsHeader];
+    self.showsHeaderLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+    self.showsHeaderLabel.text = @"Recently Added TV Shows";
+    self.showsHeaderLabel.font = [UIFont boldSystemFontOfSize:18];
+    [self.scrollView addSubview:self.showsHeaderLabel];
     
-    self.showsTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 50, self.view.bounds.size.width, 260) style:UITableViewStylePlain];
+    self.showsTableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStylePlain];
     self.showsTableView.delegate = self;
     self.showsTableView.dataSource = self;
     self.showsTableView.tag = 1;
-    self.showsTableView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     [self.scrollView addSubview:self.showsTableView];
     
-    UILabel *albumsHeader = [[UILabel alloc] initWithFrame:CGRectMake(15, 280, self.view.bounds.size.width - 30, 30)];
-    albumsHeader.text = @"Recently Added Albums";
-    albumsHeader.font = [UIFont boldSystemFontOfSize:18];
-    [self.scrollView addSubview:albumsHeader];
+    self.albumsHeaderLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+    self.albumsHeaderLabel.text = @"Recently Added Albums";
+    self.albumsHeaderLabel.font = [UIFont boldSystemFontOfSize:18];
+    [self.scrollView addSubview:self.albumsHeaderLabel];
     
-    self.albumsTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 320, self.view.bounds.size.width, 260) style:UITableViewStylePlain];
+    self.albumsTableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStylePlain];
     self.albumsTableView.delegate = self;
     self.albumsTableView.dataSource = self;
     self.albumsTableView.tag = 2;
-    self.albumsTableView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     [self.scrollView addSubview:self.albumsTableView];
-    self.scrollView.contentSize = CGSizeMake(self.view.bounds.size.width, 660);
+    
     [self fetchShows];
     [self fetchAlbums];
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
     
+    CGFloat width = self.view.bounds.size.width;
+    CGFloat padding = 15.0;
+    CGFloat currentY = 10.0;
+    CGFloat headerHeight = 30.0;
+    CGFloat tableHeight = 260.0;
+    
+    self.showsHeaderLabel.frame = CGRectMake(padding, currentY, width - 2 * padding, headerHeight);
+    currentY += headerHeight + 10;
+    
+    self.showsTableView.frame = CGRectMake(0, currentY, width, tableHeight);
+    currentY += tableHeight + 20;
+    
+    self.albumsHeaderLabel.frame = CGRectMake(padding, currentY, width - 2 * padding, headerHeight);
+    currentY += headerHeight + 10;
+    
+    self.albumsTableView.frame = CGRectMake(0, currentY, width, tableHeight);
+    currentY += tableHeight + 20;
+    
+    self.scrollView.contentSize = CGSizeMake(width, currentY);
 }
 
 #pragma mark - Data Fetching
 
 - (void)fetchShows {
     NSLog(@"show fetch time");
-    NSString *serverUrl = [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"];
-    NSString *token = [[NSUserDefaults standardUserDefaults] stringForKey:@"token"];
-    NSString *urlString = [NSString stringWithFormat:@"%@/Items?IncludeItemTypes=Series&SortBy=DateCreated&SortOrder=Descending&Recursive=true&Limit=5", serverUrl];
-    NSURL *url = [NSURL URLWithString:urlString];
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
-    NSInteger deviceId = [[NSUserDefaults standardUserDefaults] integerForKey:@"device_id"];
-    NSString *deviceName = [self deviceName];
-    NSString *authHeader = [NSString stringWithFormat:@"MediaBrowser Client=\"Jellyfin for Legacy iOS\", Device=\"%@\", DeviceId=\"%ld\", Version=\"1.0\", Token=\"%@\"", deviceName, (long)deviceId, token];
-    [request setValue:authHeader forHTTPHeaderField:@"Authorization"];
     
-    [NSURLConnection sendAsynchronousRequest:request
-                                       queue:[NSOperationQueue mainQueue]
-                           completionHandler:^(NSURLResponse *response, NSData *data, NSError *error) {
-                               if (error) {
-                                   NSLog(@"Error fetching shows: %@", error.localizedDescription);
-                                   return;
-                               }
-                               
-                               NSDictionary *jsonResponse = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-                               self.shows = jsonResponse[@"Items"];
-                               
-                               [self.showsTableView reloadData];
-                               NSLog(@"%@", jsonResponse);
-                           }];
+    NSDictionary *params = @{
+                             @"IncludeItemTypes": @"Series",
+                             @"SortBy": @"DateCreated",
+                             @"SortOrder": @"Descending",
+                             @"Recursive": @"true",
+                             @"Limit": @"5"
+                             };
+    
+    [[JellyfinClient sharedClient] getItemsWithParameters:params completion:^(NSDictionary *response, NSError *error) {
+        if (error) {
+            NSLog(@"Error fetching shows: %@", error.localizedDescription);
+            return;
+        }
+        
+        self.shows = response[@"Items"];
+        [self.showsTableView reloadData];
+        NSLog(@"%@", response);
+    }];
 }
 
 - (void)fetchAlbums {
-    NSString *serverUrl = [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"];
-    NSString *token = [[NSUserDefaults standardUserDefaults] stringForKey:@"token"];
-    NSString *urlString = [NSString stringWithFormat:@"%@/Items?IncludeItemTypes=MusicAlbum&Recursive=true&SortBy=DateCreated&Fields=PrimaryImageAspectRatio,SortName&SortOrder=Descending&Limit=5", serverUrl];
-    NSURL *url = [NSURL URLWithString:urlString];
+    NSDictionary *params = @{
+                             @"IncludeItemTypes": @"MusicAlbum",
+                             @"Recursive": @"true",
+                             @"SortBy": @"DateCreated",
+                             @"Fields": @"PrimaryImageAspectRatio,SortName",
+                             @"SortOrder": @"Descending",
+                             @"Limit": @"5"
+                             };
     
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
-    NSInteger deviceId = [[NSUserDefaults standardUserDefaults] integerForKey:@"device_id"];
-    NSString *deviceName = [self deviceName];
-    NSString *authHeader = [NSString stringWithFormat:@"MediaBrowser Client=\"Jellyfin for Legacy iOS\", Device=\"%@\", DeviceId=\"%ld\", Version=\"1.0\", Token=\"%@\"", deviceName, (long)deviceId, token];
-    [request setValue:authHeader forHTTPHeaderField:@"Authorization"];
-    
-    [NSURLConnection sendAsynchronousRequest:request
-                                       queue:[NSOperationQueue mainQueue]
-                           completionHandler:^(NSURLResponse *response, NSData *data, NSError *error) {
-                               if (error) {
-                                   NSLog(@"Error fetching albums: %@", error.localizedDescription);
-                                   return;
-                               }
-                               
-                               NSDictionary *jsonResponse = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];;
-                               self.albums = jsonResponse[@"Items"];
-                               
-                               [self.albumsTableView reloadData];
-                           }];
+    [[JellyfinClient sharedClient] getItemsWithParameters:params completion:^(NSDictionary *response, NSError *error) {
+        if (error) {
+            NSLog(@"Error fetching albums: %@", error.localizedDescription);
+            return;
+        }
+        
+        self.albums = response[@"Items"];
+        [self.albumsTableView reloadData];
+    }];
 }
 
 - (void)fetchServerData {
-    NSString *serverUrl = [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"];
-    NSString *urlString = [NSString stringWithFormat:@"%@/System/Info/Public", serverUrl];
-    NSURL *url = [NSURL URLWithString:urlString];
-    
-    NSURLRequest *request = [NSURLRequest requestWithURL:url];
-    
-    [NSURLConnection sendAsynchronousRequest:request
-                                       queue:[NSOperationQueue mainQueue]
-                           completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
-                               if (connectionError) {
-                                   NSLog(@"Error fetching data: %@", connectionError.localizedDescription);
-                                   return;
-                               }
-                               
-                               if (data) {
-                                   NSError *jsonError = nil;
-                                   NSDictionary *jsonResponse = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
-                                   
-                                   if (jsonError) {
-                                       NSLog(@"Error parsing JSON: %@", jsonError.localizedDescription);
-                                       return;
-                                   }
-                                   
-                                   NSString *serverName = jsonResponse[@"ServerName"];
-                                   
-                                   if (serverName && [serverName isKindOfClass:[NSString class]]) {
-                                       self.navigationItem.title = serverName;
-                                       NSLog(@"Server Name: %@", serverName);
-                                   } else {
-                                       NSLog(@"ServerName key not found or invalid.");
-                                   }
-                               }
-                           }];
+    [[JellyfinClient sharedClient] getServerInfoWithCompletion:^(NSDictionary *response, NSError *error) {
+        if (error) {
+            NSLog(@"Error fetching data: %@", error.localizedDescription);
+            return;
+        }
+        
+        NSString *serverName = response[@"ServerName"];
+        
+        if (serverName && [serverName isKindOfClass:[NSString class]]) {
+            self.navigationItem.title = serverName;
+            NSLog(@"Server Name: %@", serverName);
+        } else {
+            NSLog(@"ServerName key not found or invalid.");
+        }
+    }];
 }
 
 - (void)displayAlertView:(NSString *)title message:(NSString *)message {
@@ -271,35 +205,16 @@
     cell.imageView.image = (tableView.tag == 1) ? [UIImage imageNamed:@"PlaceholderPoster"] : [UIImage imageNamed:@"PlaceholderCover"];
     
     NSString *itemId = item[@"Id"];
-    ArtworkCache *cachedArtwork = [Artwork fetchArtworkForId:itemId inContext:self.managedObjectContext];
-    if (cachedArtwork) {
-        UIImage *image = [UIImage imageWithData:cachedArtwork.imageData];
-        if (image) {
-            [self.imageCache setObject:image forKey:itemId];
-            cell.imageView.image = image;
+    UIImage *cachedImage = [Artwork loadArtworkForId:itemId inContext:self.managedObjectContext imageCache:self.imageCache quality:50 size:CGSizeZero completion:^(UIImage *image) {
+        UITableViewCell *updateCell = [weakTableView cellForRowAtIndexPath:indexPath];
+        if (updateCell) {
+            updateCell.imageView.image = image;
+            [updateCell setNeedsLayout];
         }
-    } else {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-            NSString *imageUrlString = [NSString stringWithFormat:@"%@/Items/%@/Images/Primary?quality=50", [[NSUserDefaults standardUserDefaults] stringForKey:@"server_url"], itemId];
-            NSURL *imageUrl = [NSURL URLWithString:imageUrlString];
-            NSData *imageData = [NSData dataWithContentsOfURL:imageUrl];
-            if (imageData) {
-                UIImage *image = [UIImage imageWithData:imageData];
-                if (image) {
-                    [self.imageCache setObject:image forKey:itemId];
-                    
-                    [Artwork saveArtworkInBackground:imageData forId:itemId mainContext:self.managedObjectContext completion:nil];
-                    
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        UITableViewCell *updateCell = [weakTableView cellForRowAtIndexPath:indexPath];
-                        if (updateCell) {
-                            updateCell.imageView.image = image;
-                            [updateCell setNeedsLayout];
-                        }
-                    });
-                }
-            }
-        });
+    }];
+    
+    if (cachedImage) {
+        cell.imageView.image = cachedImage;
     }
     
     return cell;
@@ -312,10 +227,10 @@
         NSString *showId = selectedShow[@"Id"];
         NSString *showTitle = selectedShow[@"Name"];
         
-        EpisodesViewController *episodesVC = [[EpisodesViewController alloc] init];
-        episodesVC.showId = showId;
-        episodesVC.viewTitle = showTitle;
-        [self.navigationController pushViewController:episodesVC animated:YES];
+        SeasonsViewController *seasonsVC = [[SeasonsViewController alloc] init];
+        seasonsVC.showId = showId;
+        seasonsVC.viewTitle = showTitle;
+        [self.navigationController pushViewController:seasonsVC animated:YES];
     } else if(tableView.tag == 2) {
         NSDictionary *selectedAlbum = self.albums[indexPath.row];
         NSString *albumId = selectedAlbum[@"Id"];
@@ -329,5 +244,11 @@
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
+- (void)openSettings {
+    ProfileViewController *settingsVC = [[ProfileViewController alloc] init];
+    settingsVC.modalTransitionStyle = UIModalTransitionStyleFlipHorizontal;
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:settingsVC];
+    [self presentViewController:nav animated:YES completion:nil];
+}
 
 @end

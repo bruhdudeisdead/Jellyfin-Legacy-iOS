@@ -8,20 +8,34 @@
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UILabel *artistLabel;
 @property (nonatomic, strong) UILabel *albumLabel;
-@property (nonatomic, strong) UILabel *progressLabel;
+@property (nonatomic, strong) UISlider *seekSlider;
+@property (nonatomic, strong) UILabel *currentTimeLabel;
+@property (nonatomic, strong) UILabel *durationLabel;
 @property (nonatomic, strong) AVPlayer *audioPlayer;
 @property (nonatomic, assign) BOOL isLooping;
-@property (nonatomic, assign) NSInteger currentTimeInMicroseconds;
+@property (nonatomic, assign) BOOL isSeeking;
 @property (nonatomic, strong) UIToolbar *toolbar;
 @property (nonatomic, strong) UIScrollView *scrollView;
-@property (nonatomic, strong) NSTimer *timer;
+@property (nonatomic, strong) id timeObserver;
+@property (nonatomic, assign) BOOL isViewVisible;
 
 @end
 
 @implementation NowPlayingViewController
 
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        self.hidesBottomBarWhenPushed = YES;
+    }
+    return self;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    self.isViewVisible = YES;
     
     NSError *error = nil;
     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:&error];
@@ -34,7 +48,7 @@
         NSLog(@"Error activating audio session: %@", error.localizedDescription);
     }
     
-    [UIApplication sharedApplication].beginReceivingRemoteControlEvents;
+    [[UIApplication sharedApplication] beginReceivingRemoteControlEvents];
     
     self.view.backgroundColor = [UIColor whiteColor];
     
@@ -55,53 +69,61 @@
     self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self.view addSubview:self.scrollView];
     
-    CGFloat padding = 20;
-    CGFloat scrollWidth = self.scrollView.frame.size.width;
-    CGFloat maxAlbumArtHeight = self.view.frame.size.height * 0.5;
-    CGFloat imageWidth = scrollWidth - padding * 2;
-    CGFloat imageHeight = MIN(imageWidth, maxAlbumArtHeight);
-    
     self.albumArtImageView = [[UIImageView alloc] initWithImage:self.albumArt ?: [UIImage imageNamed:@"PlaceholderCover"]];
     self.albumArtImageView.contentMode = UIViewContentModeScaleAspectFit;
-    self.albumArtImageView.frame = CGRectMake(padding, padding, imageWidth, imageHeight);
     [self.scrollView addSubview:self.albumArtImageView];
     
-    CGFloat labelWidth = scrollWidth - padding * 2;
-    CGFloat currentY = CGRectGetMaxY(self.albumArtImageView.frame) + 10;
-    
-    self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(padding, currentY, labelWidth, 30)];
+    self.titleLabel = [[UILabel alloc] init];
     self.titleLabel.text = self.songTitle ?: @"Unknown Song";
     self.titleLabel.textAlignment = NSTextAlignmentCenter;
     self.titleLabel.textColor = [UIColor whiteColor];
     self.titleLabel.font = [UIFont boldSystemFontOfSize:20];
     self.titleLabel.backgroundColor = [UIColor clearColor];
+    self.titleLabel.numberOfLines = 0;
     [self.scrollView addSubview:self.titleLabel];
     
-    currentY = CGRectGetMaxY(self.titleLabel.frame) + 5;
-    
-    self.albumLabel = [[UILabel alloc] initWithFrame:CGRectMake(padding, currentY, labelWidth, 20)];
+    self.albumLabel = [[UILabel alloc] init];
     self.albumLabel.text = self.albumName ?: @"Unknown Album";
     self.albumLabel.textAlignment = NSTextAlignmentCenter;
     self.albumLabel.font = [UIFont systemFontOfSize:18];
     self.albumLabel.textColor = [UIColor whiteColor];
     self.albumLabel.backgroundColor = [UIColor clearColor];
+    self.albumLabel.numberOfLines = 0;
     [self.scrollView addSubview:self.albumLabel];
     
-    currentY = CGRectGetMaxY(self.albumLabel.frame) + 5;
-    
-    self.artistLabel = [[UILabel alloc] initWithFrame:CGRectMake(padding, currentY, labelWidth, 20)];
+    self.artistLabel = [[UILabel alloc] init];
     self.artistLabel.text = self.artistName ?: @"Unknown Artist";
     self.artistLabel.textAlignment = NSTextAlignmentCenter;
     self.artistLabel.font = [UIFont systemFontOfSize:16];
     self.artistLabel.textColor = [UIColor whiteColor];
     self.artistLabel.backgroundColor = [UIColor clearColor];
+    self.artistLabel.numberOfLines = 0;
     [self.scrollView addSubview:self.artistLabel];
     
-    self.scrollView.contentSize = CGSizeMake(scrollWidth, CGRectGetMaxY(self.artistLabel.frame) + 20);
-
-    self.tabBarController.tabBar.hidden = YES;
+    self.seekSlider = [[UISlider alloc] init];
+    self.seekSlider.minimumValue = 0;
+    [self.seekSlider addTarget:self action:@selector(sliderValueChanged:) forControlEvents:UIControlEventValueChanged];
+    [self.seekSlider addTarget:self action:@selector(sliderTouchDown:) forControlEvents:UIControlEventTouchDown];
+    [self.seekSlider addTarget:self action:@selector(sliderTouchUp:) forControlEvents:UIControlEventTouchUpInside];
+    [self.seekSlider addTarget:self action:@selector(sliderTouchUp:) forControlEvents:UIControlEventTouchUpOutside];
+    [self.scrollView addSubview:self.seekSlider];
+    
+    self.currentTimeLabel = [[UILabel alloc] init];
+    self.currentTimeLabel.textColor = [UIColor whiteColor];
+    self.currentTimeLabel.font = [UIFont systemFontOfSize:12];
+    self.currentTimeLabel.text = @"0:00";
+    self.currentTimeLabel.backgroundColor = [UIColor clearColor];
+    [self.scrollView addSubview:self.currentTimeLabel];
+    
+    self.durationLabel = [[UILabel alloc] init];
+    self.durationLabel.textColor = [UIColor whiteColor];
+    self.durationLabel.font = [UIFont systemFontOfSize:12];
+    self.durationLabel.text = @"--:--";
+    self.durationLabel.textAlignment = NSTextAlignmentRight;
+    self.durationLabel.backgroundColor = [UIColor clearColor];
+    [self.scrollView addSubview:self.durationLabel];
+    
     CGRect tabBarFrame = self.tabBarController.tabBar.frame;
-    CGFloat toolbarHeight = tabBarFrame.size.height;
     
     UIToolbar *toolbar = [[UIToolbar alloc] initWithFrame:tabBarFrame];
     toolbar.barStyle = UIBarStyleBlackOpaque;
@@ -127,42 +149,166 @@
                                              selector:@selector(songDidFinish:)
                                                  name:AVPlayerItemDidPlayToEndTimeNotification
                                                object:self.audioPlayer.currentItem];
-    [[UIApplication sharedApplication] beginReceivingRemoteControlEvents];
-    MPMediaItemArtwork *artwork = [[MPMediaItemArtwork alloc] initWithImage:[self albumArt]];
-    [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:@{
-                                                                MPMediaItemPropertyArtwork: artwork,
-                                                                MPMediaItemPropertyTitle: self.songTitle,
-                                                                MPMediaItemPropertyArtist: self.artistName,
-                                                                MPMediaItemPropertyAlbumTitle: self.albumName
-                                                                }];
-    self.currentTimeInMicroseconds = 0;
     
-    self.scrollView.contentSize = CGSizeMake(self.view.bounds.size.width, 450);
+    __weak typeof(self) weakSelf = self;
+    self.timeObserver = [self.audioPlayer addPeriodicTimeObserverForInterval:CMTimeMake(1, 1) queue:dispatch_get_main_queue() usingBlock:^(CMTime time) {
+        [weakSelf updateProgress:time];
+    }];
+    
+    [self.audioPlayer addObserver:self forKeyPath:@"currentItem.status" options:NSKeyValueObservingOptionNew context:nil];
+    [self.audioPlayer addObserver:self forKeyPath:@"rate" options:NSKeyValueObservingOptionNew context:nil];
     
     [self togglePlayPause];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (!self.isViewVisible) return;
+        
+        if ([keyPath isEqualToString:@"currentItem.status"]) {
+            if (self.audioPlayer.currentItem.status == AVPlayerItemStatusReadyToPlay) {
+                [self updateNowPlayingInfo];
+            }
+        } else if ([keyPath isEqualToString:@"rate"]) {
+            [self updateNowPlayingInfo];
+            [self updatePlayPauseButtonState];
+        }
+    });
 }
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
     
+    CGFloat width = self.view.bounds.size.width;
+    CGFloat padding = 20.0;
+    CGFloat currentY = 20.0;
+    
     CGFloat toolbarHeight = 50.0;
     CGFloat toolbarY = self.view.frame.size.height - self.tabBarController.tabBar.frame.size.height;
-    CGRect tabBarFrame = self.tabBarController.tabBar.frame;
-    self.toolbar.frame = CGRectMake(0, toolbarY, self.view.frame.size.width, toolbarHeight);
+    if (self.navigationController) {
+        toolbarY = self.view.bounds.size.height - toolbarHeight;
+    }
+    
+    if (self.tabBarController && !self.tabBarController.tabBar.hidden) {
+        toolbarY -= self.tabBarController.tabBar.frame.size.height;
+    }
+    
+    toolbarY = self.view.bounds.size.height - toolbarHeight;
+    self.toolbar.frame = CGRectMake(0, toolbarY, width, toolbarHeight);
+    
+    self.scrollView.frame = CGRectMake(0, 0, width, toolbarY);
+    
+    CGFloat maxImageHeight = self.view.bounds.size.height * 0.4;
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        maxImageHeight = self.view.bounds.size.height * 0.5;
+    }
+    
+    CGFloat imageWidth = width - 2 * padding;
+    CGFloat imageHeight = MIN(imageWidth, maxImageHeight);
+    
+    self.albumArtImageView.frame = CGRectMake(padding, currentY, imageWidth, imageHeight);
+    currentY += imageHeight + 20;
+    
+    CGSize titleSize = [self.titleLabel sizeThatFits:CGSizeMake(width - 2 * padding, CGFLOAT_MAX)];
+    self.titleLabel.frame = CGRectMake(padding, currentY, width - 2 * padding, titleSize.height);
+    currentY += titleSize.height + 10;
+    
+    CGSize albumSize = [self.albumLabel sizeThatFits:CGSizeMake(width - 2 * padding, CGFLOAT_MAX)];
+    self.albumLabel.frame = CGRectMake(padding, currentY, width - 2 * padding, albumSize.height);
+    currentY += albumSize.height + 10;
+    
+    CGSize artistSize = [self.artistLabel sizeThatFits:CGSizeMake(width - 2 * padding, CGFLOAT_MAX)];
+    self.artistLabel.frame = CGRectMake(padding, currentY, width - 2 * padding, artistSize.height);
+    currentY += artistSize.height + 20;
+    
+    self.seekSlider.frame = CGRectMake(padding, currentY, width - 2 * padding, 30);
+    currentY += 30 + 5;
+    
+    self.currentTimeLabel.frame = CGRectMake(padding, currentY, 100, 20);
+    self.durationLabel.frame = CGRectMake(width - padding - 100, currentY, 100, 20);
+    currentY += 20 + 20;
+    
+    self.scrollView.contentSize = CGSizeMake(width, currentY);
+}
+
+- (void)sliderValueChanged:(UISlider *)slider {
+    self.currentTimeLabel.text = [self formatTime:slider.value];
+}
+
+- (void)sliderTouchDown:(UISlider *)slider {
+    self.isSeeking = YES;
+}
+
+- (void)sliderTouchUp:(UISlider *)slider {
+    CMTime time = CMTimeMakeWithSeconds(slider.value, 1000);
+    [self.audioPlayer seekToTime:time completionHandler:^(BOOL finished) {
+        self.isSeeking = NO;
+        [self updateNowPlayingInfo];
+    }];
+}
+
+- (void)updateProgress:(CMTime)time {
+    if (self.isSeeking) return;
+    
+    NSTimeInterval currentTime = CMTimeGetSeconds(time);
+    NSTimeInterval duration = CMTimeGetSeconds(self.audioPlayer.currentItem.duration);
+    
+    if (isnan(duration) || duration <= 0) {
+        self.seekSlider.value = 0;
+        self.seekSlider.maximumValue = 1;
+        self.currentTimeLabel.text = @"0:00";
+        self.durationLabel.text = @"--:--";
+        return;
+    }
+    
+    self.seekSlider.maximumValue = duration;
+    self.seekSlider.value = currentTime;
+    
+    self.currentTimeLabel.text = [self formatTime:currentTime];
+    self.durationLabel.text = [self formatTime:duration];
+    
+    if (currentTime < 2.0 && self.audioPlayer.rate > 0 && self.isViewVisible) {
+        [self updateNowPlayingInfo];
+    }
+}
+
+- (NSString *)formatTime:(NSTimeInterval)totalSeconds {
+    int seconds = (int)totalSeconds % 60;
+    int minutes = ((int)totalSeconds / 60) % 60;
+    int hours = (int)totalSeconds / 3600;
+    
+    if (hours > 0) {
+        return [NSString stringWithFormat:@"%d:%02d:%02d", hours, minutes, seconds];
+    } else {
+        return [NSString stringWithFormat:@"%d:%02d", minutes, seconds];
+    }
 }
 
 - (void)togglePlayPause {
     NSMutableArray *toolbarItems = [self.toolbar.items mutableCopy];
     UIBarButtonItem *playPauseItem = toolbarItems[3];
     
-    if (self.audioPlayer.rate == 1.0) {
+    if (self.audioPlayer.rate > 0.0) {
         [self.audioPlayer pause];
-        [self updateNowPlayingInfo];
         playPauseItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemPlay target:self action:@selector(togglePlayPause)];
     } else {
-        [self updateNowPlayingInfo];
         [self.audioPlayer play];
         playPauseItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemPause target:self action:@selector(togglePlayPause)];
+    }
+    [self updateNowPlayingInfo];
+    playPauseItem.tintColor = [UIColor whiteColor];
+    [toolbarItems replaceObjectAtIndex:3 withObject:playPauseItem];
+    [self.toolbar setItems:toolbarItems animated:NO];
+}
+
+- (void)updatePlayPauseButtonState {
+    NSMutableArray *toolbarItems = [self.toolbar.items mutableCopy];
+    UIBarButtonItem *playPauseItem = toolbarItems[3];
+    
+    if (self.audioPlayer.rate > 0.0) {
+        playPauseItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemPause target:self action:@selector(togglePlayPause)];
+    } else {
+        playPauseItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemPlay target:self action:@selector(togglePlayPause)];
     }
     playPauseItem.tintColor = [UIColor whiteColor];
     [toolbarItems replaceObjectAtIndex:3 withObject:playPauseItem];
@@ -173,13 +319,25 @@
     if (self.currentIndex + 1 < self.songList.count) {
         self.currentIndex++;
         [self updatePlayerWithCurrentSong];
+    } else if (self.isLooping) {
+        self.currentIndex = 0;
+        [self updatePlayerWithCurrentSong];
     }
 }
 
 - (void)skipToPreviousSong {
-    if (self.currentIndex > 0) {
-        self.currentIndex--;
-        [self updatePlayerWithCurrentSong];
+    NSTimeInterval currentTime = CMTimeGetSeconds(self.audioPlayer.currentTime);
+    if (currentTime > 3.0) {
+        [self.audioPlayer seekToTime:kCMTimeZero];
+        [self updateNowPlayingInfo];
+    } else {
+        if (self.currentIndex > 0) {
+            self.currentIndex--;
+            [self updatePlayerWithCurrentSong];
+        } else if (self.isLooping) {
+            self.currentIndex = self.songList.count - 1;
+            [self updatePlayerWithCurrentSong];
+        }
     }
 }
 
@@ -202,16 +360,17 @@
     if (self.currentIndex + 1 < self.songList.count) {
         self.currentIndex++;
         [self updatePlayerWithCurrentSong];
-    } else {
-        NSLog(@"End of playlist");
+    } else if (self.isLooping) {
+        self.currentIndex = 0;
+        [self updatePlayerWithCurrentSong];
     }
 }
 
 - (void)updateNowPlayingInfo {
     NSMutableDictionary *nowPlayingInfo = [NSMutableDictionary dictionary];
-    nowPlayingInfo[MPMediaItemPropertyTitle] = self.songTitle;
-    nowPlayingInfo[MPMediaItemPropertyArtist] = self.artistName;
-    nowPlayingInfo[MPMediaItemPropertyAlbumTitle] = self.albumName;
+    if (self.songTitle) nowPlayingInfo[MPMediaItemPropertyTitle] = self.songTitle;
+    if (self.artistName) nowPlayingInfo[MPMediaItemPropertyArtist] = self.artistName;
+    if (self.albumName) nowPlayingInfo[MPMediaItemPropertyAlbumTitle] = self.albumName;
     
     if (self.albumArtImageView.image) {
         MPMediaItemArtwork *artwork = [[MPMediaItemArtwork alloc] initWithImage:self.albumArtImageView.image];
@@ -219,6 +378,12 @@
     }
     
     nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = @(self.audioPlayer.rate);
+    nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = @(CMTimeGetSeconds(self.audioPlayer.currentTime));
+    
+    NSTimeInterval duration = CMTimeGetSeconds(self.audioPlayer.currentItem.duration);
+    if (!isnan(duration) && duration > 0) {
+        nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = @(duration);
+    }
     
     [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:nowPlayingInfo];
 }
@@ -232,21 +397,33 @@
     NSURL *songUrl = [NSURL URLWithString:[NSString stringWithFormat:@"%@/Audio/%@/stream?static=true", serverUrl, songId]];
     
     self.songTitle = currentSong[@"Name"];
-    self.artistName = currentSong[@"Artist"];
+    self.artistName = currentSong[@"AlbumArtist"] ?: currentSong[@"Artist"];
     self.albumName = currentSong[@"Album"];
     self.titleLabel.text = self.songTitle;
     self.artistLabel.text = self.artistName;
     self.albumLabel.text = self.albumName;
     self.songURL = songUrl;
     
+    if (self.audioPlayer.currentItem) {
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:self.audioPlayer.currentItem];
+    }
+    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
         NSData *imageData = [NSData dataWithContentsOfURL:coverUrl];
         UIImage *coverImage = imageData ? [UIImage imageWithData:imageData] : [UIImage imageNamed:@"PlaceholderCover"];
         dispatch_async(dispatch_get_main_queue(), ^{
             self.albumArtImageView.image = coverImage;
+            
             AVPlayerItem *nextItem = [AVPlayerItem playerItemWithURL:songUrl];
             [self.audioPlayer replaceCurrentItemWithPlayerItem:nextItem];
+            
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                                     selector:@selector(songDidFinish:)
+                                                         name:AVPlayerItemDidPlayToEndTimeNotification
+                                                       object:nextItem];
+            
             [self.audioPlayer play];
+            [self updatePlayPauseButtonState];
             [self updateNowPlayingInfo];
         });
     });
@@ -283,7 +460,7 @@
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    self.tabBarController.tabBar.hidden = YES;
+    self.isViewVisible = YES;
     [self.view addSubview:self.toolbar];
 }
 
@@ -294,19 +471,23 @@
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
-    self.tabBarController.tabBar.hidden = NO;
+    self.isViewVisible = NO;
     if (self.audioPlayer) {
         [self.audioPlayer pause];
-        NSMutableArray *toolbarItems = [self.toolbar.items mutableCopy];
-        UIBarButtonItem *playPauseItem = toolbarItems[1];
-        playPauseItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemPlay target:self action:@selector(togglePlayPause)];
-        playPauseItem.tintColor = [UIColor whiteColor];
-        [toolbarItems replaceObjectAtIndex:1 withObject:playPauseItem];
-        [self.toolbar setItems:toolbarItems animated:NO];
+        [self updatePlayPauseButtonState];
     }
+    [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:nil];
 }
 - (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    if (self.timeObserver) {
+        [self.audioPlayer removeTimeObserver:self.timeObserver];
+        self.timeObserver = nil;
+    }
+    @try {
+        [self.audioPlayer removeObserver:self forKeyPath:@"currentItem.status"];
+        [self.audioPlayer removeObserver:self forKeyPath:@"rate"];
+    } @catch (NSException *exception) {}
     
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 @end

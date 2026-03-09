@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>34F22E86-312F-4736-A1E3-3C4A93007426</string>
+	<key>IDESourceControlProjectName</key>
+	<string>Jellyfin</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>9B9E617C81828AD05B59AB7ED67578A786A35BE9</key>
+		<string>https://github.com/bruhdudeisdead/Jellyfin-Legacy-iOS.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>Jellyfin.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>9B9E617C81828AD05B59AB7ED67578A786A35BE9</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/bruhdudeisdead/Jellyfin-Legacy-iOS.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>9B9E617C81828AD05B59AB7ED67578A786A35BE9</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>9B9E617C81828AD05B59AB7ED67578A786A35BE9</string>
+			<key>IDESourceControlWCCName</key>
+			<string>Jellyfin-Legacy-iOS</string>
+		</dict>
+	</array>
+</dict>
+</plist>

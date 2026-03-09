@@ -3,21 +3,31 @@
 //  Jellyfin
 //
 //  Created by bruhdude on 12/1/24.
-//  Copyright (c) 2024 DumbStupidStuff. All rights reserved.
+//  Copyright (c) 2024 bruhdude. All rights reserved.
 //
 
 #import "LoginViewController.h"
 #import "HomeViewController.h"
 #import "SVProgressHUD/SVProgressHUD.h"
+#import "JellyfinClient.h"
 #include <sys/sysctl.h>
 
-@interface LoginViewController ()
+@interface LoginViewController () <UITextFieldDelegate>
+
+@property (nonatomic, strong) UILabel *welcomeLabel;
+@property (nonatomic, assign) BOOL isQuickConnect;
 
 @property (nonatomic, strong) UILabel *infoLabel;
 @property (nonatomic, strong) UILabel *infoLabel2;
 @property (nonatomic, strong) UILabel *codeLabel;
 @property (nonatomic, strong) UIButton *authenticateButton;
-@property (nonatomic, strong) UIButton *doneButton;
+@property (nonatomic, strong) UIButton *passwordLoginButton;
+
+@property (nonatomic, strong) UITextField *usernameField;
+@property (nonatomic, strong) UITextField *passwordField;
+@property (nonatomic, strong) UIButton *loginButton;
+@property (nonatomic, strong) UIButton *quickConnectButton;
+
 @property (nonatomic, strong) UIActivityIndicatorView *loadingIndicator;
 
 @end
@@ -95,6 +105,10 @@
     NSString *deviceName = [self deviceName];
     NSLog(@"Device: %@", deviceName);
     self.view.backgroundColor = [UIColor whiteColor];
+    
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissKeyboard)];
+    [self.view addGestureRecognizer:tap];
+    
     [[NSUserDefaults standardUserDefaults] setValue:nil forKey:@"qc_secret"];
     if([[NSUserDefaults standardUserDefaults] integerForKey:@"device_id"] == 0) {
         NSLog(@"no device id, generating one");
@@ -103,34 +117,199 @@
     }
     NSInteger deviceId = [[NSUserDefaults standardUserDefaults] integerForKey:@"device_id"];
     NSLog(@"%ld", (long)deviceId);
-    self.infoLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 80, self.view.frame.size.width - 40, 100)];
+    
+    self.welcomeLabel = [[UILabel alloc] init];
+    self.welcomeLabel.numberOfLines = 0;
+    self.welcomeLabel.textAlignment = NSTextAlignmentCenter;
+    self.welcomeLabel.text = @"Welcome to Jellyfin for Legacy iOS!\nPlease log in to continue.";
+    self.welcomeLabel.font = [UIFont boldSystemFontOfSize:18];
+    [self.view addSubview:self.welcomeLabel];
+    
+    self.infoLabel = [[UILabel alloc] init];
     self.infoLabel.numberOfLines = 0;
     self.infoLabel.textAlignment = NSTextAlignmentCenter;
-    self.infoLabel.text = @"To log in, open Jellyfin on another device, go to Settings, open Quick Connect, and enter the code displayed below.";
+    self.infoLabel.text = @"Open Jellyfin on another device, go to Settings, open Quick Connect, and enter the code displayed below.";
     [self.view addSubview:self.infoLabel];
     
-    self.codeLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 170, self.view.frame.size.width - 40, 100)];
+    self.codeLabel = [[UILabel alloc] init];
     self.codeLabel.numberOfLines = 0;
     self.codeLabel.textAlignment = NSTextAlignmentCenter;
     self.codeLabel.text = @"------";
     [self.view addSubview:self.codeLabel];
     
     self.authenticateButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    self.authenticateButton.frame = CGRectMake(20, 260, self.view.frame.size.width - 40, 40);
     [self.authenticateButton setTitle:@"Get Code" forState:UIControlStateNormal];
     [self.authenticateButton addTarget:self action:@selector(QuickConnect) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:self.authenticateButton];
     
-    self.infoLabel2 = [[UILabel alloc] initWithFrame:CGRectMake(20, 300, self.view.frame.size.width - 40, 100)];
+    self.infoLabel2 = [[UILabel alloc] init];
     self.infoLabel2.numberOfLines = 0;
     self.infoLabel2.textAlignment = NSTextAlignmentCenter;
     self.infoLabel2.text = @"Make sure your instance has Quick Connect enabled!";
     [self.view addSubview:self.infoLabel2];
     
+    self.passwordLoginButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [self.passwordLoginButton setTitle:@"Log In with Username & Password" forState:UIControlStateNormal];
+    [self.passwordLoginButton addTarget:self action:@selector(showPasswordLogin) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:self.passwordLoginButton];
+    
+    self.usernameField = [[UITextField alloc] init];
+    self.usernameField.placeholder = @"Username";
+    self.usernameField.borderStyle = UITextBorderStyleRoundedRect;
+    self.usernameField.autocapitalizationType = UITextAutocapitalizationTypeNone;
+    self.usernameField.delegate = self;
+    [self.view addSubview:self.usernameField];
+    
+    self.passwordField = [[UITextField alloc] init];
+    self.passwordField.placeholder = @"Password";
+    self.passwordField.secureTextEntry = YES;
+    self.passwordField.borderStyle = UITextBorderStyleRoundedRect;
+    self.passwordField.delegate = self;
+    [self.view addSubview:self.passwordField];
+    
+    self.loginButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [self.loginButton setTitle:@"Log In" forState:UIControlStateNormal];
+    [self.loginButton addTarget:self action:@selector(performLogin) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:self.loginButton];
+    
+    self.quickConnectButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [self.quickConnectButton setTitle:@"Log In with Quick Connect" forState:UIControlStateNormal];
+    [self.quickConnectButton addTarget:self action:@selector(showQuickConnect) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:self.quickConnectButton];
+    
     self.loadingIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-    self.loadingIndicator.center = CGPointMake(self.view.center.x, 400);
     self.loadingIndicator.hidesWhenStopped = YES;
     [self.view addSubview:self.loadingIndicator];
+    
+    self.isQuickConnect = NO;
+    [self updateUIState];
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    
+    CGFloat width = self.view.bounds.size.width;
+    CGFloat padding = 20.0;
+    CGFloat currentY = 30.0;
+    
+    CGSize welcomeSize = [self.welcomeLabel sizeThatFits:CGSizeMake(width - 2 * padding, CGFLOAT_MAX)];
+    self.welcomeLabel.frame = CGRectMake(padding, currentY, width - 2 * padding, welcomeSize.height);
+    currentY += welcomeSize.height + 20;
+    
+    if (self.isQuickConnect) {
+        CGSize infoSize = [self.infoLabel sizeThatFits:CGSizeMake(width - 2 * padding, CGFLOAT_MAX)];
+        self.infoLabel.frame = CGRectMake(padding, currentY, width - 2 * padding, infoSize.height);
+        currentY += infoSize.height + 10;
+        
+        self.codeLabel.frame = CGRectMake(padding, currentY, width - 2 * padding, 40);
+        currentY += 40 + 10;
+        
+        self.authenticateButton.frame = CGRectMake(padding, currentY, width - 2 * padding, 40);
+        currentY += 40 + 10;
+        
+        CGSize info2Size = [self.infoLabel2 sizeThatFits:CGSizeMake(width - 2 * padding, CGFLOAT_MAX)];
+        self.infoLabel2.frame = CGRectMake(padding, currentY, width - 2 * padding, info2Size.height);
+        currentY += info2Size.height + 20;
+        
+        self.passwordLoginButton.frame = CGRectMake(padding, currentY, width - 2 * padding, 40);
+        
+    } else {
+        self.usernameField.frame = CGRectMake(padding, currentY, width - 2 * padding, 40);
+        currentY += 40 + 10;
+        
+        self.passwordField.frame = CGRectMake(padding, currentY, width - 2 * padding, 40);
+        currentY += 40 + 20;
+        
+        self.loginButton.frame = CGRectMake(padding, currentY, width - 2 * padding, 40);
+        currentY += 40 + 10;
+        
+        self.quickConnectButton.frame = CGRectMake(padding, currentY, width - 2 * padding, 40);
+    }
+    
+    self.loadingIndicator.center = CGPointMake(width / 2, self.view.bounds.size.height - 50);
+}
+
+- (void)showQuickConnect {
+    self.isQuickConnect = YES;
+    [self updateUIState];
+}
+
+- (void)showPasswordLogin {
+    self.isQuickConnect = NO;
+    [self updateUIState];
+}
+
+- (void)updateUIState {
+    BOOL qc = self.isQuickConnect;
+    
+    self.infoLabel.hidden = !qc;
+    self.codeLabel.hidden = !qc;
+    self.authenticateButton.hidden = !qc;
+    self.infoLabel2.hidden = !qc;
+    self.passwordLoginButton.hidden = !qc;
+    
+    self.usernameField.hidden = qc;
+    self.passwordField.hidden = qc;
+    self.loginButton.hidden = qc;
+    self.quickConnectButton.hidden = qc;
+    
+    [self.view setNeedsLayout];
+}
+
+- (void)dismissKeyboard {
+    [self.view endEditing:YES];
+}
+
+#pragma mark - UITextFieldDelegate
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    if (textField == self.usernameField) {
+        [self.passwordField becomeFirstResponder];
+    } else if (textField == self.passwordField) {
+        [self.passwordField resignFirstResponder];
+        [self performLogin];
+    }
+    return YES;
+}
+
+- (void)performLogin {
+    [self dismissKeyboard];
+    NSString *username = self.usernameField.text;
+    NSString *password = self.passwordField.text;
+    
+    if (username.length == 0) {
+        [self displayAlertView:@"Error" message:@"Please enter a username."];
+        return;
+    }
+    
+    [SVProgressHUD showWithStatus:@"Logging In..."];
+    [[JellyfinClient sharedClient] authenticateUserByName:username password:password completion:^(NSDictionary *response, NSError *error) {
+        if (error) {
+            NSLog(@"Login error: %@", error.localizedDescription);
+            [SVProgressHUD dismiss];
+            [self displayAlertView:@"Failed to Log In" message:@"Invalid username or password, or connection error."];
+            return;
+        }
+        
+        NSString *token = response[@"AccessToken"];
+        NSString *userId = response[@"User"][@"Id"];
+        NSString *userName = response[@"User"][@"Name"];
+        
+        if (token && userId) {
+            [[NSUserDefaults standardUserDefaults] setObject:token forKey:@"token"];
+            [[NSUserDefaults standardUserDefaults] setObject:userId forKey:@"user_id"];
+            if (userName) {
+                [[NSUserDefaults standardUserDefaults] setObject:userName forKey:@"username"];
+            }
+            [[NSUserDefaults standardUserDefaults] synchronize];
+            
+            [SVProgressHUD showSuccessWithStatus:@"Logged In"];
+            [self transitionToMainInterface];
+        } else {
+            [SVProgressHUD dismiss];
+            [self displayAlertView:@"Error" message:@"Invalid response from server."];
+        }
+    }];
 }
 
 - (void)QuickConnect {
@@ -146,6 +325,8 @@
         [SVProgressHUD dismiss];
         return;
     }
+    
+    [SVProgressHUD showWithStatus:@"Initiating..."];
     
     NSString *urlString = [NSString stringWithFormat:@"%@/QuickConnect/Initiate", serverUrl];
     NSURL *url = [NSURL URLWithString:urlString];
@@ -185,10 +366,13 @@
                                        NSLog(@"got code: %ld", (long)code);
                                        
                                        self.codeLabel.text = [NSString stringWithFormat:@"%ld", (long)code];
-                                       [self.authenticateButton setTitle:@"Authentication Check" forState:UIControlStateNormal];
+                                       [self.authenticateButton setTitle:@"Status Check" forState:UIControlStateNormal];
+                                       [SVProgressHUD dismiss];
                                    }
                                }];
     } else {
+        [SVProgressHUD showWithStatus:@"Checking..."];
+        
         NSString *shit = [[NSUserDefaults standardUserDefaults] stringForKey:@"qc_secret"];
         NSString *urlString = [NSString stringWithFormat:@"%@/QuickConnect/Connect?Secret=%@", serverUrl, shit];
         NSURL *url = [NSURL URLWithString:urlString];
@@ -224,11 +408,11 @@
                                        }
                                        NSInteger authenticated = [authenticatedNumber integerValue];
                                        if(authenticated == 1) {
+                                           [SVProgressHUD showSuccessWithStatus:@"Logged In"];
                                            //we ball
-                                           UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Authenticated" message:@"You have been successfully authenticated! Restart the app to continue." delegate:nil cancelButtonTitle:nil otherButtonTitles:nil];
-                                           [alert show];
                                            [self logInTime];
                                        } else {
+                                           [SVProgressHUD dismiss];
                                            [self displayAlertView:@"Not Authenticated" message:@"Follow the instructions above the code."];
                                        }
                                    }
@@ -290,9 +474,17 @@
                                    NSDictionary *jsonResponse = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
                                    NSLog(@"Response JSON: %@", jsonResponse);
                                    NSString *token = jsonResponse[@"AccessToken"];
+                                   NSString *userId = jsonResponse[@"User"][@"Id"];
+                                   NSString *userName = jsonResponse[@"User"][@"Name"];
                                    NSLog(@"got token: %@", token);
                                    if(token != nil) {
                                        [[NSUserDefaults standardUserDefaults] setValue:token forKey:@"token"];
+                                       if(userId != nil) {
+                                           [[NSUserDefaults standardUserDefaults] setValue:userId forKey:@"user_id"];
+                                       }
+                                       if (userName) {
+                                           [[NSUserDefaults standardUserDefaults] setValue:userName forKey:@"username"];
+                                       }
                                        [[NSUserDefaults standardUserDefaults] synchronize];
                                        [self transitionToMainInterface];
                                    } else {
@@ -309,6 +501,23 @@
 
 - (void)transitionToMainInterface {
     [[NSUserDefaults standardUserDefaults] synchronize];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+        UIViewController *mainVC = [storyboard instantiateInitialViewController];
+        
+        UIWindow *window = [[UIApplication sharedApplication] keyWindow];
+        if (!window) {
+            window = [[[UIApplication sharedApplication] delegate] window];
+        }
+        
+        window.rootViewController = mainVC;
+        
+        [UIView transitionWithView:window
+                          duration:0.3
+                           options:UIViewAnimationOptionTransitionCrossDissolve
+                        animations:nil
+                        completion:nil];
+    });
 }
 
 - (void)displayAlertView:(NSString *)title message:(NSString *)message {
